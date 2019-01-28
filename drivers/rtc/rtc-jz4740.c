@@ -34,7 +34,7 @@
 #define JZ_REG_RTC_RESET_COUNTER	0x28
 #define JZ_REG_RTC_SCRATCHPAD	0x34
 
-/* The following are present on the jz4780 */
+/* The following are present on the jz4780 and x1000 */
 #define JZ_REG_RTC_WENR	0x3C
 #define JZ_RTC_WENR_WEN	BIT(31)
 
@@ -46,7 +46,7 @@
 #define JZ_RTC_CTRL_AE		BIT(2)
 #define JZ_RTC_CTRL_ENABLE	BIT(0)
 
-/* Magic value to enable writes on jz4780 */
+/* Magic value to enable writes on jz4780 and x1000 */
 #define JZ_RTC_WENR_MAGIC	0xA55A
 
 #define JZ_RTC_WAKEUP_FILTER_MASK	0x0000FFE0
@@ -55,6 +55,7 @@
 enum jz4740_rtc_type {
 	ID_JZ4740,
 	ID_JZ4780,
+	ID_X1000,
 };
 
 struct jz4740_rtc {
@@ -301,6 +302,7 @@ static void jz4740_rtc_power_off(void)
 static const struct of_device_id jz4740_rtc_of_match[] = {
 	{ .compatible = "ingenic,jz4740-rtc", .data = (void *)ID_JZ4740 },
 	{ .compatible = "ingenic,jz4780-rtc", .data = (void *)ID_JZ4780 },
+	{ .compatible = "ingenic,x1000-rtc", .data = (void *)ID_X1000 },
 	{},
 };
 MODULE_DEVICE_TABLE(of, jz4740_rtc_of_match);
@@ -429,6 +431,7 @@ static const struct dev_pm_ops jz4740_pm_ops = {
 static const struct platform_device_id jz4740_rtc_ids[] = {
 	{ "jz4740-rtc", ID_JZ4740 },
 	{ "jz4780-rtc", ID_JZ4780 },
+	{ "x1000-rtc", ID_X1000 },
 	{}
 };
 MODULE_DEVICE_TABLE(platform, jz4740_rtc_ids);
