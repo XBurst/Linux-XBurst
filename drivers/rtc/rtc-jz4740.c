@@ -1,17 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  Copyright (C) 2009-2010, Lars-Peter Clausen <lars@metafoo.de>
  *  Copyright (C) 2010, Paul Cercueil <paul@crapouillou.net>
- *	 JZ4740 SoC RTC driver
- *
- *  This program is free software; you can redistribute it and/or modify it
- *  under  the terms of  the GNU General Public License as published by the
- *  Free Software Foundation;  either version 2 of the License, or (at your
- *  option) any later version.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  675 Mass Ave, Cambridge, MA 02139, USA.
- *
+ *	Ingenic XBurst platform RTC support
  */
 
 #include <linux/clk.h>
@@ -450,5 +441,5 @@ module_platform_driver(jz4740_rtc_driver);
 
 MODULE_AUTHOR("Lars-Peter Clausen <lars@metafoo.de>");
 MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("RTC driver for the JZ4740 SoC\n");
+MODULE_DESCRIPTION("RTC driver for Ingenic XBurst platform\n");
 MODULE_ALIAS("platform:jz4740-rtc");
