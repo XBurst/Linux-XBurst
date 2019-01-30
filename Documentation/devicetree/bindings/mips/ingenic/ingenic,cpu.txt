@@ -1,0 +1,16 @@
+Ingenic Soc CPU
+
+Required properties:
+- device_type: Must be "cpu".
+- compatible: One of:
+  - "ingenic,xburst".
+- reg: The number of the CPU.
+- next-level-cache: If there is a next level cache, point to it.
+
+Example:
+cpu0: cpu@0 {
+	device_type = "cpu";
+	compatible = "ingenic,xburst";
+	reg = <0>;
+	next-level-cache = <&l2c>;
+};
