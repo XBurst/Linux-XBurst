@@ -1960,11 +1960,16 @@ static inline void cpu_probe_ingenic(struct cpuinfo_mips *c, unsigned int cpu)
 	c->options &= ~MIPS_CPU_COUNTER;
 	BUG_ON(!__builtin_constant_p(cpu_has_counter) || cpu_has_counter);
 	switch (c->processor_id & PRID_IMP_MASK) {
-	case PRID_IMP_INGENIC_XBURST:
+	case PRID_IMP_INGENIC_XBURST: {
+		unsigned int config7;
 		c->cputype = CPU_XBURST;
 		c->writecombine = _CACHE_UNCACHED_ACCELERATED;
 		__cpu_name[cpu] = "Ingenic XBurst";
+		config7 = read_c0_config7();
+		config7 |= (1 << 4);
+		write_c0_config7(config7);
 		break;
+	}
 	default:
 		panic("Unknown Ingenic Processor ID!");
 		break;
