@@ -28,7 +28,7 @@
 #include <asm/mach-jz4740/dma.h>
 
 #define JZ_REG_MMC_STRPCL	0x00
-#define JZ_REG_MMC_STATUS	0x04
+#define JZ_REG_MMC_STAT		0x04
 #define JZ_REG_MMC_CLKRT	0x08
 #define JZ_REG_MMC_CMDAT	0x0C
 #define JZ_REG_MMC_RESTO	0x10
@@ -40,7 +40,7 @@
 #define JZ_REG_MMC_IREG		0x28
 #define JZ_REG_MMC_CMD		0x2C
 #define JZ_REG_MMC_ARG		0x30
-#define JZ_REG_MMC_RESP_FIFO	0x34
+#define JZ_REG_MMC_RES		0x34
 #define JZ_REG_MMC_RXFIFO	0x38
 #define JZ_REG_MMC_TXFIFO	0x3C
 #define JZ_REG_MMC_DMAC		0x44
@@ -391,7 +391,7 @@ static void jz4740_mmc_clock_disable(struct jz4740_mmc_host *host)
 
 	writew(JZ_MMC_STRPCL_CLOCK_STOP, host->base + JZ_REG_MMC_STRPCL);
 	do {
-		status = readl(host->base + JZ_REG_MMC_STATUS);
+		status = readl(host->base + JZ_REG_MMC_STAT);
 	} while (status & JZ_MMC_STATUS_CLK_EN && --timeout);
 }
 
@@ -403,7 +403,7 @@ static void jz4740_mmc_reset(struct jz4740_mmc_host *host)
 	writew(JZ_MMC_STRPCL_RESET, host->base + JZ_REG_MMC_STRPCL);
 	udelay(10);
 	do {
-		status = readl(host->base + JZ_REG_MMC_STATUS);
+		status = readl(host->base + JZ_REG_MMC_STAT);
 	} while (status & JZ_MMC_STATUS_IS_RESETTING && --timeout);
 }
 
@@ -446,7 +446,7 @@ static void jz4740_mmc_transfer_check_state(struct jz4740_mmc_host *host,
 {
 	int status;
 
-	status = readl(host->base + JZ_REG_MMC_STATUS);
+	status = readl(host->base + JZ_REG_MMC_STAT);
 	if (status & JZ_MMC_STATUS_WRITE_ERROR_MASK) {
 		if (status & (JZ_MMC_STATUS_TIMEOUT_WRITE)) {
 			host->req->cmd->error = -ETIMEDOUT;
@@ -580,10 +580,10 @@ static bool jz4740_mmc_read_data(struct jz4740_mmc_host *host,
 	/* For whatever reason there is sometime one word more in the fifo then
 	 * requested */
 	timeout = 1000;
-	status = readl(host->base + JZ_REG_MMC_STATUS);
+	status = readl(host->base + JZ_REG_MMC_STAT);
 	while (!(status & JZ_MMC_STATUS_DATA_FIFO_EMPTY) && --timeout) {
 		d = readl(fifo_addr);
-		status = readl(host->base + JZ_REG_MMC_STATUS);
+		status = readl(host->base + JZ_REG_MMC_STAT);
 	}
 
 	return false;
@@ -614,7 +614,7 @@ static void jz4740_mmc_read_response(struct jz4740_mmc_host *host,
 {
 	int i;
 	uint16_t tmp;
-	void __iomem *fifo_addr = host->base + JZ_REG_MMC_RESP_FIFO;
+	void __iomem *fifo_addr = host->base + JZ_REG_MMC_RES;
 
 	if (cmd->flags & MMC_RSP_136) {
 		tmp = readw(fifo_addr);
@@ -797,7 +797,7 @@ static irqreturn_t jz_mmc_irq(int irq, void *devid)
 	struct mmc_command *cmd = host->cmd;
 	uint32_t irq_reg, status, tmp;
 
-	status = readl(host->base + JZ_REG_MMC_STATUS);
+	status = readl(host->base + JZ_REG_MMC_STAT);
 	irq_reg = jz4740_mmc_read_irq_reg(host);
 
 	tmp = irq_reg;
