@@ -1978,11 +1978,23 @@ static inline void cpu_probe_ingenic(struct cpuinfo_mips *c, unsigned int cpu)
 	}
 
 	/*
-	 * The config0 register in the Xburst CPUs with a processor ID of
+	 * The config0 register in the XBurst CPUs with a processor ID of
+	 * PRID_COMP_INGENIC_D1 has an abandoned huge page tlb, write
+	 * 0xa9000000 to cp0 config5 sel4 to disable this function to
+	 * prevent getting stuck.
+	 */
+	if ((c->processor_id & PRID_COMP_MASK) == PRID_COMP_INGENIC_D1) {
+		__asm__ (
+			"li    $2, 0xa9000000 \n\t"
+			"mtc0  $2, $5, 4      \n\t"
+			"nop                  \n\t"
+			::"r"(2));
+	/*
+	 * The config0 register in the XBurst CPUs with a processor ID of
 	 * PRID_COMP_INGENIC_D0 report themselves as MIPS32r2 compatible,
 	 * but they don't actually support this ISA.
 	 */
-	if ((c->processor_id & PRID_COMP_MASK) == PRID_COMP_INGENIC_D0)
+	} else if ((c->processor_id & PRID_COMP_MASK) == PRID_COMP_INGENIC_D0)
 		c->isa_level &= ~MIPS_CPU_ISA_M32R2;
 }
 
