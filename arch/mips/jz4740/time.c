@@ -101,7 +101,9 @@ static struct clock_event_device jz4740_clockevent = {
 #ifdef CONFIG_MACH_JZ4740
 	.irq = JZ4740_IRQ_TCU0,
 #endif
-#if defined(CONFIG_MACH_JZ4770) || defined(CONFIG_MACH_JZ4780)
+#if defined(CONFIG_MACH_JZ4770) || \
+    defined(CONFIG_MACH_JZ4780) || \
+    defined(CONFIG_MACH_X1000)
 	.irq = JZ4780_IRQ_TCU2,
 #endif
 };
