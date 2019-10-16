@@ -43,10 +43,26 @@
 	pinctrl-0 = <&pins_uart2>;
 };
 
+&msc0 {
+	status = "okay";
+
+	bus-width = <8>;
+	max-frequency = <50000000>;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&pins_msc0>;
+};
+
 &pinctrl {
 	pins_uart2: uart2 {
 		function = "uart2";
 		groups = "uart2-data-d";
+		bias-disable;
+	};
+
+	pins_msc0: msc0 {
+		function = "mmc0";
+		groups = "mmc0-1bit", "mmc0-4bit", "mmc0-8bit";
 		bias-disable;
 	};
 };

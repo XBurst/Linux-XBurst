@@ -199,5 +199,47 @@
 
 			clocks = <&cgu X1000_CLK_PDMA>;
 		};
+
+		msc0: msc@13450000 {
+			compatible = "ingenic,x1000-mmc";
+			reg = <0x13450000 0x1000>;
+
+			interrupt-parent = <&intc>;
+			interrupts = <37>;
+
+			clocks = <&cgu X1000_CLK_MSC0>;
+			clock-names = "mmc";
+
+			cap-sd-highspeed;
+			cap-mmc-highspeed;
+			cap-sdio-irq;
+
+			dmas = <&pdma X1000_DMA_MSC0_RX 0xffffffff>,
+				   <&pdma X1000_DMA_MSC0_TX 0xffffffff>;
+			dma-names = "rx", "tx";
+
+			status = "disabled";
+		};
+
+		msc1: msc@13460000 {
+			compatible = "ingenic,x1000-mmc";
+			reg = <0x13460000 0x1000>;
+
+			interrupt-parent = <&intc>;
+			interrupts = <36>;
+
+			clocks = <&cgu X1000_CLK_MSC1>;
+			clock-names = "mmc";
+
+			cap-sd-highspeed;
+			cap-mmc-highspeed;
+			cap-sdio-irq;
+
+			dmas = <&pdma X1000_DMA_MSC1_RX 0xffffffff>,
+				   <&pdma X1000_DMA_MSC1_TX 0xffffffff>;
+			dma-names = "rx", "tx";
+
+			status = "disabled";
+		};
 	};
 };
