@@ -75,6 +75,17 @@
 			interrupts = <27 26 25>;
 		};
 
+		rtc: rtc@10003000 {
+			compatible = "ingenic,x1000-rtc", "ingenic,jz4780-rtc";
+			reg = <0x10003000 0x4c>;
+
+			interrupt-parent = <&intc>;
+			interrupts = <32>;
+
+			clocks = <&cgu X1000_CLK_RTCLK>;
+			clock-names = "rtc";
+		};
+
 		uart0: serial@10030000 {
 			compatible = "ingenic,x1000-uart";
 			reg = <0x10030000 0x100>;
