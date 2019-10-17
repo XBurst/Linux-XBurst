@@ -219,6 +219,20 @@
 			clocks = <&cgu X1000_CLK_PDMA>;
 		};
 
+		mac: mac@134b0000 {
+			compatible = "ingenic,x1000-mac", "snps,dwmac";
+			reg = <0x134b0000 0x2000>;
+
+			interrupt-parent = <&intc>;
+			interrupts = <55>;
+			interrupt-names = "macirq";
+
+			clocks = <&cgu X1000_CLK_MAC>;
+			clock-names = "stmmaceth";
+
+			status = "disabled";
+		};
+
 		msc0: msc@13450000 {
 			compatible = "ingenic,x1000-mmc";
 			reg = <0x13450000 0x1000>;

@@ -43,6 +43,19 @@
 	pinctrl-0 = <&pins_uart2>;
 };
 
+&mac {
+	status = "okay";
+
+	phy-mode = "rmii";
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&pins_mac>;
+
+	snps,reset-gpio = <&gpc 23 GPIO_ACTIVE_HIGH>; /* PC23 */
+	snps,reset-active-low;
+	snps,reset-delays-us = <0 10000 30000>;
+};
+
 &msc0 {
 	status = "okay";
 
@@ -57,6 +70,12 @@
 	pins_uart2: uart2 {
 		function = "uart2";
 		groups = "uart2-data-d";
+		bias-disable;
+	};
+
+	pins_mac: mac {
+		function = "mac";
+		groups = "mac";
 		bias-disable;
 	};
 
