@@ -36,6 +36,20 @@
 	ingenic,pwm-channels-mask = <0xfa>;
 };
 
+&i2c0 {
+	status = "okay";
+
+	clock-frequency = <400000>;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&pins_i2c0>;
+
+	ads7830@48 {
+		compatible = "ti,ads7830";
+		reg = <0x48>;
+	};
+};
+
 &uart2 {
 	status = "okay";
 
@@ -67,6 +81,12 @@
 };
 
 &pinctrl {
+	pins_i2c0: i2c0 {
+		function = "i2c0";
+		groups = "i2c0-data";
+		bias-disable;
+	};
+
 	pins_uart2: uart2 {
 		function = "uart2";
 		groups = "uart2-data-d";
