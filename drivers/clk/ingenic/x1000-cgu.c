@@ -18,7 +18,7 @@
 #define CGU_REG_CLKGR		0x20
 #define CGU_REG_OPCR		0x24
 #define CGU_REG_DDRCDR		0x2c
-#define CGU_REG_MACPHYCDR	0x54
+#define CGU_REG_MACCDR		0x54
 #define CGU_REG_I2SCDR		0x60
 #define CGU_REG_LPCDR		0x64
 #define CGU_REG_MSC0CDR		0x68
@@ -30,7 +30,7 @@
 #define CGU_REG_CMP_INTR	0xb0
 #define CGU_REG_CMP_INTRE	0xb4
 #define CGU_REG_DRCG		0xd0
-#define CGU_REG_CLOCKSTATUS	0xd4
+#define CGU_REG_CPCSR		0xd4
 #define CGU_REG_PCMCDR1		0xe0
 #define CGU_REG_MACPHYC		0xe8
 
@@ -157,8 +157,8 @@ static const struct ingenic_cgu_clk_info x1000_cgu_clocks[] = {
 	[X1000_CLK_MAC] = {
 		"mac", CGU_CLK_MUX | CGU_CLK_DIV | CGU_CLK_GATE,
 		.parents = { X1000_CLK_SCLKA, X1000_CLK_MPLL},
-		.mux = { CGU_REG_MACPHYCDR, 31, 1 },
-		.div = { CGU_REG_DDRCDR, 0, 1, 8, 29, 28, 27 },
+		.mux = { CGU_REG_MACCDR, 31, 1 },
+		.div = { CGU_REG_MACCDR, 0, 1, 8, 29, 28, 27 },
 		.gate = { CGU_REG_CLKGR, 25 },
 	},
 
@@ -201,6 +201,24 @@ static const struct ingenic_cgu_clk_info x1000_cgu_clocks[] = {
 		"sfc", CGU_CLK_GATE,
 		.parents = { X1000_CLK_SSIPLL, -1, -1, -1 },
 		.gate = { CGU_REG_CLKGR, 2 },
+	},
+
+	[X1000_CLK_I2C0] = {
+		"i2c0", CGU_CLK_GATE,
+		.parents = { X1000_CLK_PCLK, -1, -1, -1 },
+		.gate = { CGU_REG_CLKGR, 7 },
+	},
+
+	[X1000_CLK_I2C1] = {
+		"i2c1", CGU_CLK_GATE,
+		.parents = { X1000_CLK_PCLK, -1, -1, -1 },
+		.gate = { CGU_REG_CLKGR, 8 },
+	},
+
+	[X1000_CLK_I2C2] = {
+		"i2c2", CGU_CLK_GATE,
+		.parents = { X1000_CLK_PCLK, -1, -1, -1 },
+		.gate = { CGU_REG_CLKGR, 9 },
 	},
 
 	[X1000_CLK_UART0] = {
