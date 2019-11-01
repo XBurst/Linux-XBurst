@@ -1017,7 +1017,7 @@ static const struct ingenic_chip_info jz4780_chip_info = {
 };
 
 static const u32 x1000_pull_ups[4] = {
-	0xffffffff, 0x8dffffff, 0x7d3fffff, 0xffffffff,
+	0xffffffff, 0xfdffffff, 0x0dffffff, 0x0000003f,
 };
 
 static const u32 x1000_pull_downs[4] = {
@@ -1028,7 +1028,7 @@ static int x1000_uart0_data_pins[] = { 0x4a, 0x4b, };
 static int x1000_uart0_hwflow_pins[] = { 0x4c, 0x4d, };
 static int x1000_uart1_data_a_pins[] = { 0x04, 0x05, };
 static int x1000_uart1_data_d_pins[] = { 0x62, 0x63, };
-static int x1000_uart1_hwflow_d_pins[] = { 0x64, 0x65, };
+static int x1000_uart1_hwflow_pins[] = { 0x64, 0x65, };
 static int x1000_uart2_data_a_pins[] = { 0x02, 0x03, };
 static int x1000_uart2_data_d_pins[] = { 0x65, 0x64, };
 static int x1000_mmc0_1bit_pins[] = { 0x18, 0x19, 0x17, };
@@ -1078,7 +1078,7 @@ static int x1000_uart0_data_funcs[] = { 0, 0, };
 static int x1000_uart0_hwflow_funcs[] = { 0, 0, };
 static int x1000_uart1_data_a_funcs[] = { 2, 2, };
 static int x1000_uart1_data_d_funcs[] = { 1, 1, };
-static int x1000_uart1_hwflow_d_funcs[] = { 1, 1, };
+static int x1000_uart1_hwflow_funcs[] = { 1, 1, };
 static int x1000_uart2_data_a_funcs[] = { 2, 2, };
 static int x1000_uart2_data_d_funcs[] = { 0, 0, };
 static int x1000_mmc0_1bit_funcs[] = { 1, 1, 1, };
@@ -1116,7 +1116,7 @@ static const struct group_desc x1000_groups[] = {
 	INGENIC_PIN_GROUP("uart0-hwflow", x1000_uart0_hwflow),
 	INGENIC_PIN_GROUP("uart1-data-a", x1000_uart1_data_a),
 	INGENIC_PIN_GROUP("uart1-data-d", x1000_uart1_data_d),
-	INGENIC_PIN_GROUP("uart1-hwflow-d", x1000_uart1_hwflow_d),
+	INGENIC_PIN_GROUP("uart1-hwflow", x1000_uart1_hwflow),
 	INGENIC_PIN_GROUP("uart2-data-a", x1000_uart2_data_a),
 	INGENIC_PIN_GROUP("uart2-data-d", x1000_uart2_data_d),
 	INGENIC_PIN_GROUP("mmc0-1bit", x1000_mmc0_1bit),
@@ -1156,7 +1156,7 @@ static const char *x1000_mmc0_groups[] = {
 	"mmc0-1bit", "mmc0-4bit", "mmc0-8bit",
 };
 static const char *x1000_mmc1_groups[] = {
-	"mmc1-1bit-e", "mmc1-4bit-e",
+	"mmc1-1bit", "mmc1-4bit",
 };
 static const char *x1000_nemc_groups[] = {
 	"nemc-8bit-data", "nemc-16bit-data",
@@ -1224,11 +1224,11 @@ static int x1500_uart0_data_pins[] = { 0x4a, 0x4b, };
 static int x1500_uart0_hwflow_pins[] = { 0x4c, 0x4d, };
 static int x1500_uart1_data_a_pins[] = { 0x04, 0x05, };
 static int x1500_uart1_data_d_pins[] = { 0x62, 0x63, };
-static int x1500_uart1_hwflow_d_pins[] = { 0x64, 0x65, };
+static int x1500_uart1_hwflow_pins[] = { 0x64, 0x65, };
 static int x1500_uart2_data_a_pins[] = { 0x02, 0x03, };
 static int x1500_uart2_data_d_pins[] = { 0x65, 0x64, };
-static int x1500_mmc0_1bit_pins[] = { 0x18, 0x19, 0x17, };
-static int x1500_mmc0_4bit_pins[] = { 0x16, 0x15, 0x14, };
+static int x1500_mmc_1bit_pins[] = { 0x18, 0x19, 0x17, };
+static int x1500_mmc_4bit_pins[] = { 0x16, 0x15, 0x14, };
 static int x1500_i2c0_pins[] = { 0x38, 0x37, };
 static int x1500_i2c1_a_pins[] = { 0x01, 0x00, };
 static int x1500_i2c1_c_pins[] = { 0x5b, 0x5a, };
@@ -1247,11 +1247,11 @@ static int x1500_uart0_data_funcs[] = { 0, 0, };
 static int x1500_uart0_hwflow_funcs[] = { 0, 0, };
 static int x1500_uart1_data_a_funcs[] = { 2, 2, };
 static int x1500_uart1_data_d_funcs[] = { 1, 1, };
-static int x1500_uart1_hwflow_d_funcs[] = { 1, 1, };
+static int x1500_uart1_hwflow_funcs[] = { 1, 1, };
 static int x1500_uart2_data_a_funcs[] = { 2, 2, };
 static int x1500_uart2_data_d_funcs[] = { 0, 0, };
-static int x1500_mmc0_1bit_funcs[] = { 1, 1, 1, };
-static int x1500_mmc0_4bit_funcs[] = { 1, 1, 1, };
+static int x1500_mmc_1bit_funcs[] = { 1, 1, 1, };
+static int x1500_mmc_4bit_funcs[] = { 1, 1, 1, };
 static int x1500_i2c0_funcs[] = { 0, 0, };
 static int x1500_i2c1_a_funcs[] = { 2, 2, };
 static int x1500_i2c1_c_funcs[] = { 0, 0, };
@@ -1268,11 +1268,11 @@ static const struct group_desc x1500_groups[] = {
 	INGENIC_PIN_GROUP("uart0-hwflow", x1500_uart0_hwflow),
 	INGENIC_PIN_GROUP("uart1-data-a", x1500_uart1_data_a),
 	INGENIC_PIN_GROUP("uart1-data-d", x1500_uart1_data_d),
-	INGENIC_PIN_GROUP("uart1-hwflow-d", x1500_uart1_hwflow_d),
+	INGENIC_PIN_GROUP("uart1-hwflow", x1500_uart1_hwflow),
 	INGENIC_PIN_GROUP("uart2-data-a", x1500_uart2_data_a),
 	INGENIC_PIN_GROUP("uart2-data-d", x1500_uart2_data_d),
-	INGENIC_PIN_GROUP("mmc0-1bit", x1500_mmc0_1bit),
-	INGENIC_PIN_GROUP("mmc0-4bit", x1500_mmc0_4bit),
+	INGENIC_PIN_GROUP("mmc-1bit", x1500_mmc_1bit),
+	INGENIC_PIN_GROUP("mmc-4bit", x1500_mmc_4bit),
 	INGENIC_PIN_GROUP("i2c0-data", x1500_i2c0),
 	INGENIC_PIN_GROUP("i2c1-data-a", x1500_i2c1_a),
 	INGENIC_PIN_GROUP("i2c1-data-c", x1500_i2c1_c),
@@ -1291,7 +1291,7 @@ static const char *x1500_uart1_groups[] = {
 	"uart1-data-a", "uart1-data-d", "uart1-hwflow-d",
 };
 static const char *x1500_uart2_groups[] = { "uart2-data-a", "uart2-data-d", };
-static const char *x1500_mmc0_groups[] = { "mmc0-1bit", "mmc0-4bit", };
+static const char *x1500_mmc_groups[] = { "mmc-1bit", "mmc-4bit", };
 static const char *x1500_i2c0_groups[] = { "i2c0-data", };
 static const char *x1500_i2c1_groups[] = { "i2c1-data-a", "i2c1-data-c", };
 static const char *x1500_i2c2_groups[] = { "i2c2-data", };
@@ -1307,7 +1307,7 @@ static const struct function_desc x1500_functions[] = {
 	{ "uart0", x1500_uart0_groups, ARRAY_SIZE(x1500_uart0_groups), },
 	{ "uart1", x1500_uart1_groups, ARRAY_SIZE(x1500_uart1_groups), },
 	{ "uart2", x1500_uart2_groups, ARRAY_SIZE(x1500_uart2_groups), },
-	{ "mmc0", x1500_mmc0_groups, ARRAY_SIZE(x1500_mmc0_groups), },
+	{ "mmc", x1500_mmc_groups, ARRAY_SIZE(x1500_mmc_groups), },
 	{ "i2c0", x1500_i2c0_groups, ARRAY_SIZE(x1500_i2c0_groups), },
 	{ "i2c1", x1500_i2c1_groups, ARRAY_SIZE(x1500_i2c1_groups), },
 	{ "i2c2", x1500_i2c2_groups, ARRAY_SIZE(x1500_i2c2_groups), },
