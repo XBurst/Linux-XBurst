@@ -1948,10 +1948,8 @@ static inline void cpu_probe_ingenic(struct cpuinfo_mips *c, unsigned int cpu)
 	BUG_ON(!__builtin_constant_p(cpu_has_counter) || cpu_has_counter);
 
 	switch (c->processor_id & PRID_IMP_MASK) {
-	case PRID_IMP_XBURST:
-		c->cputype = CPU_XBURST;
-		c->writecombine = _CACHE_UNCACHED_ACCELERATED;
-		__cpu_name[cpu] = "Ingenic XBurst";
+	case PRID_IMP_XBURST_REV1:
+
 		/*
 		 * The XBurst core by default attempts to avoid branch target
 		 * buffer lookups by detecting & special casing loops. This
@@ -1959,34 +1957,43 @@ static inline void cpu_probe_ingenic(struct cpuinfo_mips *c, unsigned int cpu)
 		 * Set cp0 config7 bit 4 to disable this feature.
 		 */
 		set_c0_config7(MIPS_CONF7_BTB_LOOP_EN);
+
+		switch (c->processor_id & PRID_COMP_MASK) {
+
+		/*
+		 * The config0 register in the XBurst CPUs with a processor ID of
+		 * PRID_COMP_INGENIC_D0 report themselves as MIPS32r2 compatible,
+		 * but they don't actually support this ISA.
+		 */
+		case PRID_COMP_INGENIC_D0:
+			c->isa_level &= ~MIPS_CPU_ISA_M32R2;
+			break;
+
+		/*
+		 * The config0 register in the XBurst CPUs with a processor ID of
+		 * PRID_COMP_INGENIC_D1 has an abandoned huge page tlb mode, this
+		 * mode is not compatible with the MIPS standard, it will cause
+		 * tlbmiss and into an infinite loop (line 21 in the tlb-funcs.S)
+		 * when starting the init process. After chip reset, the default
+		 * is HPTLB mode, Write 0xa9000000 to cp0 register 5 sel 4 to
+		 * switch back to VTLB mode to prevent getting stuck.
+		 */
+		case PRID_COMP_INGENIC_D1:
+			write_c0_page_ctrl(XBURST_PAGECTRL_HPTLB_DIS);
+			break;
+
+		default:
+			break;
+		}
+
+	case PRID_IMP_XBURST_REV2:
+		c->cputype = CPU_XBURST;
+		c->writecombine = _CACHE_UNCACHED_ACCELERATED;
+		__cpu_name[cpu] = "Ingenic XBurst";
 		break;
+
 	default:
 		panic("Unknown Ingenic Processor ID!");
-		break;
-	}
-
-	switch (c->processor_id & PRID_COMP_MASK) {
-	/*
-	 * The config0 register in the XBurst CPUs with a processor ID of
-	 * PRID_COMP_INGENIC_D1 has an abandoned huge page tlb mode, this
-	 * mode is not compatible with the MIPS standard, it will cause
-	 * tlbmiss and into an infinite loop (line 21 in the tlb-funcs.S)
-	 * when starting the init process. After chip reset, the default
-	 * is HPTLB mode, Write 0xa9000000 to cp0 register 5 sel 4 to
-	 * switch back to VTLB mode to prevent getting stuck.
-	 */
-	case PRID_COMP_INGENIC_D1:
-		write_c0_page_ctrl(XBURST_PAGECTRL_HPTLB_DIS);
-		break;
-	/*
-	 * The config0 register in the XBurst CPUs with a processor ID of
-	 * PRID_COMP_INGENIC_D0 report themselves as MIPS32r2 compatible,
-	 * but they don't actually support this ISA.
-	 */
-	case PRID_COMP_INGENIC_D0:
-		c->isa_level &= ~MIPS_CPU_ISA_M32R2;
-		break;
-	default:
 		break;
 	}
 }
