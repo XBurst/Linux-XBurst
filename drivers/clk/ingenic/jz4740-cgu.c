@@ -68,7 +68,8 @@ static const struct ingenic_cgu_clk_info jz4740_cgu_clocks[] = {
 		"pll", CGU_CLK_PLL,
 		.parents = { JZ4740_CLK_EXT, -1, -1, -1 },
 		.pll = {
-			.reg = CGU_REG_CPPCR,
+			.version = CGU_JZ4740,
+			.reg = { -1, CGU_REG_CPPCR },
 			.m_shift = 23,
 			.m_bits = 9,
 			.m_offset = 2,

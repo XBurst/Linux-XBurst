@@ -42,8 +42,18 @@
  * @stable_bit: the index of the stable bit in the PLL control register
  * @no_bypass_bit: if set, the PLL has no bypass functionality
  */
+enum ingenic_cgu_version {
+	CGU_JZ4740,
+	CGU_JZ4725B,
+	CGU_JZ4770,
+	CGU_JZ4780,
+	CGU_X1000,
+	CGU_X1830,
+};
+
 struct ingenic_cgu_pll_info {
-	unsigned reg;
+	enum ingenic_cgu_version version;
+	unsigned reg[2];
 	const s8 *od_encoding;
 	u8 m_shift, m_bits, m_offset;
 	u8 n_shift, n_bits, n_offset;

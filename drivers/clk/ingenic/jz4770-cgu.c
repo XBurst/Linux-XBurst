@@ -101,7 +101,8 @@ static const struct ingenic_cgu_clk_info jz4770_cgu_clocks[] = {
 		"pll0", CGU_CLK_PLL,
 		.parents = { JZ4770_CLK_EXT },
 		.pll = {
-			.reg = CGU_REG_CPPCR0,
+			.version = CGU_JZ4770,
+			.reg = { -1, CGU_REG_CPPCR0 },
 			.m_shift = 24,
 			.m_bits = 7,
 			.m_offset = 1,
@@ -123,7 +124,8 @@ static const struct ingenic_cgu_clk_info jz4770_cgu_clocks[] = {
 		"pll1", CGU_CLK_PLL,
 		.parents = { JZ4770_CLK_EXT },
 		.pll = {
-			.reg = CGU_REG_CPPCR1,
+			.version = CGU_JZ4770,
+			.reg = { -1, CGU_REG_CPPCR1 },
 			.m_shift = 24,
 			.m_bits = 7,
 			.m_offset = 1,

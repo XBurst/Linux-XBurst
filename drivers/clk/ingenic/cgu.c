@@ -84,7 +84,7 @@ ingenic_pll_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
 	pll_info = &clk_info->pll;
 
 	spin_lock_irqsave(&cgu->lock, flags);
-	ctl = readl(cgu->base + pll_info->reg);
+	ctl = readl(cgu->base + pll_info->reg[1]);
 	spin_unlock_irqrestore(&cgu->lock, flags);
 
 	m = (ctl >> pll_info->m_shift) & GENMASK(pll_info->m_bits - 1, 0);
@@ -93,8 +93,17 @@ ingenic_pll_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
 	n += pll_info->n_offset;
 	od_enc = ctl >> pll_info->od_shift;
 	od_enc &= GENMASK(pll_info->od_bits - 1, 0);
-	bypass = !pll_info->no_bypass_bit &&
-		 !!(ctl & BIT(pll_info->bypass_bit));
+
+	if (pll_info->version >= CGU_X1830) {
+		spin_lock_irqsave(&cgu->lock, flags);
+		ctl = readl(cgu->base + pll_info->reg[0]);
+		spin_unlock_irqrestore(&cgu->lock, flags);
+
+		bypass = !pll_info->no_bypass_bit &&
+			 !!(ctl & BIT(pll_info->bypass_bit));
+	} else
+		bypass = !pll_info->no_bypass_bit &&
+			 !!(ctl & BIT(pll_info->bypass_bit));
 
 	if (bypass)
 		return parent_rate;
@@ -106,7 +115,10 @@ ingenic_pll_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
 	BUG_ON(od == pll_info->od_max);
 	od++;
 
-	return div_u64((u64)parent_rate * m, n * od);
+	if (pll_info->version >= CGU_X1830)
+		return div_u64((u64)parent_rate * m * 2, n * od);
+	else
+		return div_u64((u64)parent_rate * m, n * od);
 }
 
 static unsigned long
@@ -139,7 +151,10 @@ ingenic_pll_calc(const struct ingenic_cgu_clk_info *clk_info,
 	if (pod)
 		*pod = od;
 
-	return div_u64((u64)parent_rate * m, n * od);
+	if (pll_info->version >= CGU_X1830)
+		return div_u64((u64)parent_rate * m * 2, n * od);
+	else
+		return div_u64((u64)parent_rate * m, n * od);
 }
 
 static inline const struct ingenic_cgu_clk_info *to_clk_info(
@@ -183,7 +198,7 @@ ingenic_pll_set_rate(struct clk_hw *hw, unsigned long req_rate,
 			clk_info->name, req_rate, rate);
 
 	spin_lock_irqsave(&cgu->lock, flags);
-	ctl = readl(cgu->base + pll_info->reg);
+	ctl = readl(cgu->base + pll_info->reg[1]);
 
 	ctl &= ~(GENMASK(pll_info->m_bits - 1, 0) << pll_info->m_shift);
 	ctl |= (m - pll_info->m_offset) << pll_info->m_shift;
@@ -194,7 +209,7 @@ ingenic_pll_set_rate(struct clk_hw *hw, unsigned long req_rate,
 	ctl &= ~(GENMASK(pll_info->od_bits - 1, 0) << pll_info->od_shift);
 	ctl |= pll_info->od_encoding[od - 1] << pll_info->od_shift;
 
-	writel(ctl, cgu->base + pll_info->reg);
+	writel(ctl, cgu->base + pll_info->reg[1]);
 	spin_unlock_irqrestore(&cgu->lock, flags);
 
 	return 0;
@@ -212,16 +227,28 @@ static int ingenic_pll_enable(struct clk_hw *hw)
 	u32 ctl;
 
 	spin_lock_irqsave(&cgu->lock, flags);
-	ctl = readl(cgu->base + pll_info->reg);
 
-	ctl &= ~BIT(pll_info->bypass_bit);
+	if (pll_info->version >= CGU_X1830) {
+		ctl = readl(cgu->base + pll_info->reg[0]);
+
+		ctl &= ~BIT(pll_info->bypass_bit);
+
+		writel(ctl, cgu->base + pll_info->reg[0]);
+
+		ctl = readl(cgu->base + pll_info->reg[1]);
+	} else {
+		ctl = readl(cgu->base + pll_info->reg[1]);
+
+		ctl &= ~BIT(pll_info->bypass_bit);
+	}
+
 	ctl |= BIT(pll_info->enable_bit);
 
-	writel(ctl, cgu->base + pll_info->reg);
+	writel(ctl, cgu->base + pll_info->reg[1]);
 
 	/* wait for the PLL to stabilise */
 	for (i = 0; i < timeout; i++) {
-		ctl = readl(cgu->base + pll_info->reg);
+		ctl = readl(cgu->base + pll_info->reg[1]);
 		if (ctl & BIT(pll_info->stable_bit))
 			break;
 		mdelay(1);
@@ -245,11 +272,11 @@ static void ingenic_pll_disable(struct clk_hw *hw)
 	u32 ctl;
 
 	spin_lock_irqsave(&cgu->lock, flags);
-	ctl = readl(cgu->base + pll_info->reg);
+	ctl = readl(cgu->base + pll_info->reg[1]);
 
 	ctl &= ~BIT(pll_info->enable_bit);
 
-	writel(ctl, cgu->base + pll_info->reg);
+	writel(ctl, cgu->base + pll_info->reg[1]);
 	spin_unlock_irqrestore(&cgu->lock, flags);
 }
 
@@ -263,7 +290,7 @@ static int ingenic_pll_is_enabled(struct clk_hw *hw)
 	u32 ctl;
 
 	spin_lock_irqsave(&cgu->lock, flags);
-	ctl = readl(cgu->base + pll_info->reg);
+	ctl = readl(cgu->base + pll_info->reg[1]);
 	spin_unlock_irqrestore(&cgu->lock, flags);
 
 	return !!(ctl & BIT(pll_info->enable_bit));
