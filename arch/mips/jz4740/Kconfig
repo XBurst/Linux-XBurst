@@ -17,8 +17,12 @@ config JZ4780_CI20
 	select MACH_JZ4780
 
 config X1000_CU1000
-	bool "YSH & ATIL General Module CU Neo"
+	bool "YSH & ATIL General Module CU1000"
 	select MACH_X1000
+
+config X1830_CU1830
+	bool "YSH & ATIL General Module CU1830"
+	select MACH_X1830
 
 endchoice
 
