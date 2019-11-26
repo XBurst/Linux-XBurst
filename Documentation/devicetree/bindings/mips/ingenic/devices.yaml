@@ -32,4 +32,5 @@ properties:
       - description: YSH & ATIL General Module CU Neo
         items:
           - const: yna,cu1000
+          - const: yna,cu1830
 ...
