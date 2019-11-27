@@ -75,6 +75,14 @@
 			interrupts = <27 26 25>;
 		};
 
+		wdt: watchdog@10002000 {
+			compatible = "ingenic,x1830-watchdog", "ingenic,jz4780-watchdog";
+			reg = <0x10002000 0x10>;
+
+			clocks = <&cgu X1830_CLK_RTCLK>;
+			clock-names = "rtc";
+		};
+
 		rtc: rtc@10003000 {
 			compatible = "ingenic,x1830-rtc", "ingenic,jz4780-rtc";
 			reg = <0x10003000 0x4c>;
