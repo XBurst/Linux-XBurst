@@ -178,6 +178,20 @@
 			status = "disabled";
 		};
 
+		spi: spi_gpio {
+			compatible = "spi-gpio";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			num-chipselects = <1>;
+
+			gpio-miso = <&gpd 3 0>;
+			gpio-sck = <&gpd 0 0>;
+			gpio-mosi = <&gpd 2 0>;
+			cs-gpios = <&gpd 1 0>;
+
+			status = "disabled";
+		};
+
 		pinctrl: pin-controller@10010000 {
 			compatible = "ingenic,x1000-pinctrl";
 			reg = <0x10010000 0x800>;
