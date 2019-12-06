@@ -65,13 +65,23 @@
 	status = "okay";
 
 	phy-mode = "rmii";
+	phy-handle = <&lan8720a>;
 
 	pinctrl-names = "default";
 	pinctrl-0 = <&pins_mac>;
 
-	snps,reset-gpio = <&gpc 23 GPIO_ACTIVE_HIGH>; /* PC23 */
+	snps,reset-gpio = <&gpc 23 GPIO_ACTIVE_LOW>; /* PC23 */
 	snps,reset-active-low;
 	snps,reset-delays-us = <0 10000 30000>;
+};
+
+&mdio {
+	status = "okay";
+
+	lan8720a: ethernet-phy@0 {
+		compatible = "ethernet-phy-id0007.c0f0", "ethernet-phy-ieee802.3-c22";
+		reg = <0>;
+	};
 };
 
 &msc0 {
