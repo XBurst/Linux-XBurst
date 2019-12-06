@@ -74,6 +74,31 @@
 	status = "okay";
 };
 
+&spi {
+	status = "okay";
+
+	sc16is752@0 {
+		compatible = "nxp,sc16is752";
+		reg = <0>;
+
+		clocks = <&clk_sc16is752>;
+
+		interrupt-parent = <&gpc>;
+		interrupts = <6 IRQ_TYPE_EDGE_FALLING>;
+
+		gpio-controller;
+		gpio-cells = <2>;
+
+		spi-max-frequency = <1000000>;
+
+		clk_sc16is752: sc16is752 {
+			compatible = "fixed-clock";
+			#clock-cells = <0>;
+			clock-frequency = <48000000>;
+		};
+	};
+};
+
 &mac {
 	phy-mode = "rmii";
 	phy-handle = <&lan8720a>;
