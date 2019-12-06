@@ -4,6 +4,7 @@
 #include "x1000.dtsi"
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/clock/ingenic,tcu.h>
+#include <dt-bindings/interrupt-controller/irq.h>
 
 / {
 	compatible = "yna,cu1000", "ingenic,x1000";
@@ -20,6 +21,11 @@
 	memory {
 		device_type = "memory";
 		reg = <0x0 0x04000000>;
+	};
+
+	wlan_pwrseq: msc1-pwrseq {
+		compatible = "mmc-pwrseq-simple";
+		reset-gpios = <&gpc 17 GPIO_ACTIVE_LOW>;
 	};
 };
 
@@ -108,9 +114,15 @@
 
 	non-removable;
 
-	brcmf: wifi@1 {
-		reg = <1>;
+	mmc-pwrseq = <&wlan_pwrseq>;
+
+	ap6212a: wifi@1 {
 		compatible = "brcm,bcm4329-fmac";
+		reg = <1>;
+
+		interrupt-parent = <&gpc>;
+		interrupts = <16 IRQ_TYPE_EDGE_FALLING>;
+		interrupt-names = "host-wake";
 	};
 };
 
