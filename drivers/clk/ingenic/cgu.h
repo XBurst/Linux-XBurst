@@ -16,7 +16,9 @@
 
 /**
  * struct ingenic_cgu_pll_info - information about a PLL
- * @reg: the offset of the PLL's control register within the CGU
+ * @pll_reg: the offset of the PLL's control register within the CGU
+ * @bypass_reg: the offset of the bypass control register within the CGU
+ * @rate_multiplier: the multiplier needed by pll rate calculation
  * @m_shift: the number of bits to shift the multiplier value by (ie. the
  *           index of the lowest bit of the multiplier value in the PLL's
  *           control register)
@@ -43,7 +45,9 @@
  * @no_bypass_bit: if set, the PLL has no bypass functionality
  */
 struct ingenic_cgu_pll_info {
-	unsigned reg;
+	unsigned pll_reg;
+	unsigned bypass_reg;
+	unsigned rate_multiplier;
 	const s8 *od_encoding;
 	u8 m_shift, m_bits, m_offset;
 	u8 n_shift, n_bits, n_offset;

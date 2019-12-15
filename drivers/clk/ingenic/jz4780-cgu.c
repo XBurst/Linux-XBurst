@@ -220,7 +220,9 @@ static const struct ingenic_cgu_clk_info jz4780_cgu_clocks[] = {
 	/* PLLs */
 
 #define DEF_PLL(name) { \
-	.reg = CGU_REG_ ## name, \
+	.pll_reg = CGU_REG_ ## name, \
+	.bypass_reg = CGU_REG_ ## name, \
+	.rate_multiplier = 1, \
 	.m_shift = 19, \
 	.m_bits = 13, \
 	.m_offset = 1, \

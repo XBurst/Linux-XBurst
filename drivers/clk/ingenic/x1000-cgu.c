@@ -57,7 +57,9 @@ static const struct ingenic_cgu_clk_info x1000_cgu_clocks[] = {
 		"apll", CGU_CLK_PLL,
 		.parents = { X1000_CLK_EXCLK, -1, -1, -1 },
 		.pll = {
-			.reg = CGU_REG_APLL,
+			.pll_reg = CGU_REG_APLL,
+			.bypass_reg = CGU_REG_APLL,
+			.rate_multiplier = 1,
 			.m_shift = 24,
 			.m_bits = 7,
 			.m_offset = 1,
@@ -78,7 +80,9 @@ static const struct ingenic_cgu_clk_info x1000_cgu_clocks[] = {
 		"mpll", CGU_CLK_PLL,
 		.parents = { X1000_CLK_EXCLK, -1, -1, -1 },
 		.pll = {
-			.reg = CGU_REG_MPLL,
+			.pll_reg = CGU_REG_MPLL,
+			.bypass_reg = CGU_REG_MPLL,
+			.rate_multiplier = 1,
 			.m_shift = 24,
 			.m_bits = 7,
 			.m_offset = 1,
