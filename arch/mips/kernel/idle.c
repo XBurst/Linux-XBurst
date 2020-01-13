@@ -19,6 +19,10 @@
 #include <asm/idle.h>
 #include <asm/mipsregs.h>
 
+#ifdef CONFIG_MACH_JZ4780
+# include <asm/mach-jz4740/jz4780-smp.h>
+#endif
+
 /*
  * Not all of the MIPS CPUs have the "wait" instruction available. Moreover,
  * the implementation of the "wait" feature differs between CPU families. This
@@ -172,7 +176,6 @@ void __init check_wait(void)
 	case CPU_CAVIUM_OCTEON_PLUS:
 	case CPU_CAVIUM_OCTEON2:
 	case CPU_CAVIUM_OCTEON3:
-	case CPU_XBURST:
 	case CPU_LOONGSON32:
 	case CPU_XLR:
 	case CPU_XLP:
@@ -246,6 +249,15 @@ void __init check_wait(void)
 		   cpu_wait = r4k_wait;
 		 */
 		break;
+	case CPU_XBURST:
+#if defined(CONFIG_MACH_JZ4780) && defined(CONFIG_SMP)
+		if (NR_CPUS > 1)
+			cpu_wait = jz4780_smp_wait_irqoff;
+		else
+			cpu_wait = r4k_wait;
+#else
+		cpu_wait = r4k_wait;
+#endif
 	default:
 		break;
 	}
