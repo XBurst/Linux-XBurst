@@ -1,0 +1,18 @@
+Bindings for Ingenic SoCs with XBurst CPU inside.
+
+Required properties:
+- compatible: One of:
+  - "ingenic,jz4740".
+  - "ingenic,jz4725b".
+  - "ingenic,jz4760".
+  - "ingenic,jz4760b".
+  - "ingenic,jz4770".
+  - "ingenic,jz4780".
+  - "ingenic,x1000".
+  - "ingenic,x1000e".
+  - "ingenic,x1500".
+
+Example:
+#address-cells = <1>;
+#size-cells = <1>;
+compatible = "ingenic,jz4780";
