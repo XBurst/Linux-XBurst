@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * JZ47xx SoCs TCU IRQ driver
+ * XBurst SoCs TCU IRQ driver
  * Copyright (C) 2019 Paul Cercueil <paul@crapouillou.net>
+ * Copyright (C) 2020 周琰杰 (Zhou Yanjie) <zhouyanjie@wanyeetech.com>
  */
 
 #include <linux/bitops.h>
@@ -21,18 +22,23 @@
 
 #include <dt-bindings/clock/ingenic,tcu.h>
 
+static DEFINE_PER_CPU(call_single_data_t, ingenic_cevt_csd);
+
 struct ingenic_soc_info {
 	unsigned int num_channels;
 };
 
 struct ingenic_tcu {
 	struct regmap *map;
+	struct device_node *np;
 	struct clk *timer_clk, *cs_clk;
+	unsigned int timer_local[NR_CPUS];
 	unsigned int timer_channel, cs_channel;
 	struct clock_event_device cevt;
 	struct clocksource cs;
-	char name[4];
+	char name[8];
 	unsigned long pwm_channels_mask;
+	int cpu;
 };
 
 static struct ingenic_tcu *ingenic_tcu;
@@ -81,6 +87,24 @@ static int ingenic_tcu_cevt_set_next(unsigned long next,
 	return 0;
 }
 
+static void ingenic_per_cpu_event_handler(void *info)
+{
+	struct clock_event_device *cevt = (struct clock_event_device *) info;
+
+	cevt->event_handler(cevt);
+}
+
+static void ingenic_tcu_per_cpu_cb(struct clock_event_device *evt)
+{
+	struct ingenic_tcu *tcu = to_ingenic_tcu(evt);
+	call_single_data_t *csd;
+
+	csd = &per_cpu(ingenic_cevt_csd, tcu->cpu);
+	csd->info = (void *) evt;
+	csd->func = ingenic_per_cpu_event_handler;
+	smp_call_function_single_async(tcu->cpu, csd);
+}
+
 static irqreturn_t ingenic_tcu_cevt_cb(int irq, void *dev_id)
 {
 	struct clock_event_device *evt = dev_id;
@@ -89,7 +113,7 @@ static irqreturn_t ingenic_tcu_cevt_cb(int irq, void *dev_id)
 	regmap_write(tcu->map, TCU_REG_TECR, BIT(tcu->timer_channel));
 
 	if (evt->event_handler)
-		evt->event_handler(evt);
+		ingenic_tcu_per_cpu_cb(evt);
 
 	return IRQ_HANDLED;
 }
@@ -105,13 +129,20 @@ static struct clk * __init ingenic_tcu_get_clock(struct device_node *np, int id)
 	return of_clk_get_from_provider(&args);
 }
 
-static int __init ingenic_tcu_timer_init(struct device_node *np,
-					 struct ingenic_tcu *tcu)
+static int ingenic_tcu_setup_per_cpu_cevt(struct device_node *np,
+				     unsigned int channel)
 {
-	unsigned int timer_virq, channel = tcu->timer_channel;
+	unsigned int timer_virq;
 	struct irq_domain *domain;
+	struct ingenic_tcu *tcu;
 	unsigned long rate;
 	int err;
+
+	tcu = kzalloc(sizeof(*tcu), GFP_KERNEL);
+	if (!tcu)
+		return -ENOMEM;
+
+	tcu->map = ingenic_tcu->map;
 
 	tcu->timer_clk = ingenic_tcu_get_clock(np, channel);
 	if (IS_ERR(tcu->timer_clk))
@@ -139,13 +170,15 @@ static int __init ingenic_tcu_timer_init(struct device_node *np,
 		goto err_clk_disable;
 	}
 
-	snprintf(tcu->name, sizeof(tcu->name), "TCU");
+	snprintf(tcu->name, sizeof(tcu->name), "TCU%u", channel);
 
 	err = request_irq(timer_virq, ingenic_tcu_cevt_cb, IRQF_TIMER,
 			  tcu->name, &tcu->cevt);
 	if (err)
 		goto err_irq_dispose_mapping;
 
+	tcu->cpu = smp_processor_id();
+	tcu->timer_channel = channel;
 	tcu->cevt.cpumask = cpumask_of(smp_processor_id());
 	tcu->cevt.features = CLOCK_EVT_FEAT_ONESHOT;
 	tcu->cevt.name = tcu->name;
@@ -164,6 +197,25 @@ err_clk_disable:
 err_clk_put:
 	clk_put(tcu->timer_clk);
 	return err;
+}
+
+static int ingenic_tcu_setup_cevt(unsigned int cpu)
+{
+	int ret;
+
+	ret = ingenic_tcu_setup_per_cpu_cevt(ingenic_tcu->np,
+						ingenic_tcu->timer_local[cpu]);
+	if (ret)
+		goto err_tcu_clocksource_cleanup;
+
+	return 0;
+
+err_tcu_clocksource_cleanup:
+	clocksource_unregister(&ingenic_tcu->cs);
+	clk_disable_unprepare(ingenic_tcu->cs_clk);
+	clk_put(ingenic_tcu->cs_clk);
+	kfree(ingenic_tcu);
+	return ret;
 }
 
 static int __init ingenic_tcu_clocksource_init(struct device_node *np,
@@ -240,6 +292,7 @@ static int __init ingenic_tcu_init(struct device_node *np)
 	const struct ingenic_soc_info *soc_info = id->data;
 	struct ingenic_tcu *tcu;
 	struct regmap *map;
+	unsigned cpu = 0;
 	long rate;
 	int ret;
 
@@ -253,13 +306,18 @@ static int __init ingenic_tcu_init(struct device_node *np)
 	if (!tcu)
 		return -ENOMEM;
 
-	/* Enable all TCU channels for PWM use by default except channels 0/1 */
-	tcu->pwm_channels_mask = GENMASK(soc_info->num_channels - 1, 2);
+	/*
+	 * Enable all TCU channels for PWM use by default except channels 0/1,
+	 * and channel 2 if target CPU is JZ4780 and SMP is selected.
+	 */
+	tcu->pwm_channels_mask = GENMASK(soc_info->num_channels - 1,
+								num_possible_cpus() + 1);
 	of_property_read_u32(np, "ingenic,pwm-channels-mask",
 			     (u32 *)&tcu->pwm_channels_mask);
 
-	/* Verify that we have at least two free channels */
-	if (hweight8(tcu->pwm_channels_mask) > soc_info->num_channels - 2) {
+	/* Verify that we have at least num_possible_cpus() + 1 free channels */
+	if (hweight8(tcu->pwm_channels_mask) >
+			soc_info->num_channels - num_possible_cpus() + 1) {
 		pr_crit("%s: Invalid PWM channel mask: 0x%02lx\n", __func__,
 			tcu->pwm_channels_mask);
 		ret = -EINVAL;
@@ -267,13 +325,19 @@ static int __init ingenic_tcu_init(struct device_node *np)
 	}
 
 	tcu->map = map;
+	tcu->np = np;
 	ingenic_tcu = tcu;
 
-	tcu->timer_channel = find_first_zero_bit(&tcu->pwm_channels_mask,
+	tcu->timer_local[cpu] = find_first_zero_bit(&tcu->pwm_channels_mask,
 						 soc_info->num_channels);
+
+	for (cpu = 1; cpu < num_possible_cpus(); cpu++)
+		tcu->timer_local[cpu] = find_next_zero_bit(
+				&tcu->pwm_channels_mask, soc_info->num_channels,
+				tcu->timer_local[cpu - 1] + 1);
+
 	tcu->cs_channel = find_next_zero_bit(&tcu->pwm_channels_mask,
-					     soc_info->num_channels,
-					     tcu->timer_channel + 1);
+			soc_info->num_channels, tcu->timer_local[cpu - 1] + 1);
 
 	ret = ingenic_tcu_clocksource_init(np, tcu);
 	if (ret) {
@@ -281,9 +345,10 @@ static int __init ingenic_tcu_init(struct device_node *np)
 		goto err_free_ingenic_tcu;
 	}
 
-	ret = ingenic_tcu_timer_init(np, tcu);
-	if (ret)
-		goto err_tcu_clocksource_cleanup;
+	/* Setup clock events on each CPU core */
+	ret = cpuhp_setup_state(CPUHP_AP_ONLINE_DYN, "Ingenic XBurst: online",
+				ingenic_tcu_setup_cevt, NULL);
+	WARN_ON(ret < 0);
 
 	/* Register the sched_clock at the end as there's no way to undo it */
 	rate = clk_get_rate(tcu->cs_clk);
@@ -291,10 +356,6 @@ static int __init ingenic_tcu_init(struct device_node *np)
 
 	return 0;
 
-err_tcu_clocksource_cleanup:
-	clocksource_unregister(&tcu->cs);
-	clk_disable_unprepare(tcu->cs_clk);
-	clk_put(tcu->cs_clk);
 err_free_ingenic_tcu:
 	kfree(tcu);
 	return ret;
