@@ -61,7 +61,7 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pins_i2c0>;
 
-	ads7830@48 {
+	ads7830: adc@48 {
 		compatible = "ti,ads7830";
 		reg = <0x48>;
 	};
@@ -111,14 +111,13 @@
 &msc1 {
 	status = "okay";
 
+	#address-cells = <1>;
+	#size-cells = <0>;
 	bus-width = <4>;
 	max-frequency = <50000000>;
 
 	pinctrl-names = "default";
 	pinctrl-0 = <&pins_msc1>;
-
-	#address-cells = <1>;
-	#size-cells = <0>;
 
 	non-removable;
 

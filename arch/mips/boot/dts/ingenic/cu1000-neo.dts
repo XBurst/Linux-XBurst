@@ -61,37 +61,41 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pins_i2c0>;
 
-	ads7830@48 {
+	ads7830: adc@48 {
 		compatible = "ti,ads7830";
 		reg = <0x48>;
 	};
 };
 
 &uart2 {
+	status = "okay";
+
 	pinctrl-names = "default";
 	pinctrl-0 = <&pins_uart2>;
-
-	status = "okay";
 };
 
-&spi {
+&ssi {
 	status = "okay";
 
-	sc16is752@0 {
-		compatible = "nxp,sc16is752";
-		reg = <0>;
+	spi-max-frequency = <50000000>;
 
-		clocks = <&clk_sc16is752>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pins_ssi>;
+
+	sc16is752: expander@0 {
+		compatible = "nxp,sc16is752";
+		reg = <0>; /* CE0 */
+		spi-max-frequency = <4000000>;
+
+		clocks = <&exclk_sc16is752>;
 
 		interrupt-parent = <&gpc>;
 		interrupts = <6 IRQ_TYPE_EDGE_FALLING>;
 
 		gpio-controller;
-		gpio-cells = <2>;
+		#gpio-cells = <2>;
 
-		spi-max-frequency = <1000000>;
-
-		clk_sc16is752: sc16is752 {
+		exclk_sc16is752: sc16is752 {
 			compatible = "fixed-clock";
 			#clock-cells = <0>;
 			clock-frequency = <48000000>;
@@ -104,6 +108,8 @@
 };
 
 &mac {
+	status = "okay";
+
 	phy-mode = "rmii";
 	phy-handle = <&lan8720a>;
 
@@ -113,8 +119,6 @@
 	snps,reset-gpio = <&gpc 23 GPIO_ACTIVE_LOW>; /* PC23 */
 	snps,reset-active-low;
 	snps,reset-delays-us = <0 10000 30000>;
-
-	status = "okay";
 };
 
 &mdio {
@@ -127,6 +131,8 @@
 };
 
 &msc0 {
+	status = "okay";
+
 	bus-width = <8>;
 	max-frequency = <50000000>;
 
@@ -134,25 +140,22 @@
 	pinctrl-0 = <&pins_msc0>;
 
 	non-removable;
-
-	status = "okay";
 };
 
 &msc1 {
+	status = "okay";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
 	bus-width = <4>;
 	max-frequency = <50000000>;
 
 	pinctrl-names = "default";
 	pinctrl-0 = <&pins_msc1>;
 
-	#address-cells = <1>;
-	#size-cells = <0>;
-
 	non-removable;
 
 	mmc-pwrseq = <&wlan_pwrseq>;
-
-	status = "okay";
 
 	ap6212a: wifi@1 {
 		compatible = "brcm,bcm4329-fmac";
@@ -176,6 +179,12 @@
 	pins_uart2: uart2 {
 		function = "uart2";
 		groups = "uart2-data-d";
+		bias-disable;
+	};
+
+	pins_ssi: ssi {
+		function = "ssi";
+		groups = "ssi-dt-d", "ssi-dr-d", "ssi-clk-d", "ssi-ce0-d";
 		bias-disable;
 	};
 

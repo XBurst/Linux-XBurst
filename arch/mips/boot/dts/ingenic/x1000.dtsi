@@ -158,7 +158,6 @@
 	i2c0: i2c-controller@10050000 {
 		compatible = "ingenic,x1000-i2c";
 		reg = <0x10050000 0x1000>;
-
 		#address-cells = <1>;
 		#size-cells = <0>;
 
@@ -173,7 +172,6 @@
 	i2c1: i2c-controller@10051000 {
 		compatible = "ingenic,x1000-i2c";
 		reg = <0x10051000 0x1000>;
-
 		#address-cells = <1>;
 		#size-cells = <0>;
 
@@ -188,7 +186,6 @@
 	i2c2: i2c-controller@10052000 {
 		compatible = "ingenic,x1000-i2c";
 		reg = <0x10052000 0x1000>;
-
 		#address-cells = <1>;
 		#size-cells = <0>;
 
@@ -239,16 +236,22 @@
 		status = "disabled";
 	};
 
-	spi: spi_gpio {
-		compatible = "spi-gpio";
+	ssi: spi@10043000 {
+		compatible = "ingenic,ingenic-spi";
+		reg = <0x10043000 0x1c>;
 		#address-cells = <1>;
 		#size-cells = <0>;
-		num-chipselects = <1>;
+		num-cs = <2>;
 
-		gpio-miso = <&gpd 3 0>;
-		gpio-sck = <&gpd 0 0>;
-		gpio-mosi = <&gpd 2 0>;
-		cs-gpios = <&gpd 1 0>;
+		interrupt-parent = <&intc>;
+		interrupts = <8>;
+
+		clocks = <&cgu X1000_CLK_SSI>;
+		clock-names = "spi";
+
+		dmas = <&pdma X1000_DMA_SSI0_RX 0xffffffff>,
+			   <&pdma X1000_DMA_SSI0_TX 0xffffffff>;
+		dma-names = "rx", "tx";
 
 		status = "disabled";
 	};
