@@ -255,9 +255,15 @@ static const struct ingenic_cgu_clk_info x1830_cgu_clocks[] = {
 		.div = { CGU_REG_SSICDR, 0, 1, 8, 28, 27, 26 },
 	},
 
+	[X1830_CLK_SSIPLL_DIV2] = {
+		"ssi_pll_div2", CGU_CLK_FIXDIV,
+		.parents = { X1830_CLK_SSIPLL },
+		.fixdiv = { 2 },
+	},
+
 	[X1830_CLK_SSIMUX] = {
 		"ssi_mux", CGU_CLK_MUX,
-		.parents = { X1830_CLK_EXCLK, X1830_CLK_SSIPLL, -1, -1 },
+		.parents = { X1830_CLK_EXCLK, X1830_CLK_SSIPLL_DIV2, -1, -1 },
 		.mux = { CGU_REG_SSICDR, 29, 1 },
 	},
 
