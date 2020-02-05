@@ -61,7 +61,7 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pins_i2c0>;
 
-	ads7830@48 {
+	ads7830: adc@48 {
 		compatible = "ti,ads7830";
 		reg = <0x48>;
 	};
