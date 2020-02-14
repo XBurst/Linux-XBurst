@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <dt-bindings/clock/ingenic,tcu.h>
 #include <dt-bindings/clock/x1000-cgu.h>
 #include <dt-bindings/dma/x1000-dma.h>
 
@@ -86,7 +87,7 @@
 			compatible = "ingenic,x1000-watchdog", "ingenic,jz4780-watchdog";
 			reg = <0x0 0x10>;
 
-			clocks = <&cgu X1000_CLK_RTCLK>;
+			clocks = <&tcu TCU_CLK_WDT>;
 			clock-names = "wdt";
 		};
 	};

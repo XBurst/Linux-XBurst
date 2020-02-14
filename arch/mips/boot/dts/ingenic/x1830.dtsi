@@ -72,7 +72,7 @@
 			compatible = "ingenic,x1830-watchdog", "ingenic,jz4780-watchdog";
 			reg = <0x0 0x10>;
 
-			clocks = <&cgu X1830_CLK_RTCLK>;
+			clocks = <&tcu TCU_CLK_WDT>;
 			clock-names = "wdt";
 		};
 	};
