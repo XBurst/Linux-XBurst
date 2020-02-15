@@ -7,6 +7,7 @@
 obj-y += init.o
 obj-y += irq.o
 obj-y += proc.o
+obj-y += ../ingenic/
 
 obj-$(CONFIG_YAMON_DT_SHIM)		+= yamon-dt.o
 obj-$(CONFIG_LEGACY_BOARD_SEAD3)	+= board-sead3.o
