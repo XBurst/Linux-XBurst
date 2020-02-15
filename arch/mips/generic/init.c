@@ -15,6 +15,7 @@
 #include <asm/fw/fw.h>
 #include <asm/irq_cpu.h>
 #include <asm/machine.h>
+#include <asm/mach-ingenic/smp.h>
 #include <asm/mips-cps.h>
 #include <asm/prom.h>
 #include <asm/smp-ops.h>
@@ -106,6 +107,9 @@ void __init plat_mem_setup(void)
 
 	fw_init_cmdline();
 	__dt_setup_arch((void *)fdt);
+
+	if (IS_ENABLED(CONFIG_SMP))
+		jz4780_smp_init();
 }
 
 void __init device_tree_init(void)

@@ -8,6 +8,7 @@ config MACH_INGENIC_GENERIC
 	select MACH_JZ4775
 	select MACH_JZ4780
 	select MACH_X1000
+	select MACH_X1830
 
 choice
 	prompt "Machine type"
@@ -69,9 +70,11 @@ config MACH_JZ4775
 
 config MACH_JZ4780
 	bool
+	select GENERIC_CLOCKEVENTS_BROADCAST if SMP
 	select MIPS_CPU_SCACHE
 	select SYS_HAS_CPU_MIPS32_R2
 	select SYS_SUPPORTS_HIGHMEM
+	select SYS_SUPPORTS_SMP
 
 config MACH_X1000
 	bool
