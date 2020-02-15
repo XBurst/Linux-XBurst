@@ -7,3 +7,7 @@
 obj-y += setup.o
 
 CFLAGS_setup.o = -I$(src)/../../../scripts/dtc/libfdt
+
+# SMP support
+obj-$(CONFIG_SMP) += smp.o
+obj-$(CONFIG_SMP) += smp-entry.o
