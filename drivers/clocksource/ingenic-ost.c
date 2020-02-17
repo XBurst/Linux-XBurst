@@ -25,10 +25,53 @@
  * The TCU_REG_OST_CNT{L,R} from <linux/mfd/ingenic-tcu.h> are only for the
  * regmap; these are for use with the __iomem pointer.
  */
-#define OST_REG_CNTL		0x4
-#define OST_REG_CNTH		0x8
+#define OST_REG_CNTL		0x04
+#define OST_REG_CNTH		0x08
+
+/* X1000 OST register offsets */
+#define OST_REG_OSTCCR		0x00
+#define OST_REG_OSTCR		0x08
+#define OST_REG_OSTFR		0x0c
+#define OST_REG_OSTMR		0x10
+#define OST_REG_OST1DFR		0x14
+#define OST_REG_OST2CNTL	0x20
+#define OST_REG_OSTESR		0x34
+#define OST_REG_OSTECR		0x38
+
+/* bits within the OSTCCR register */
+#define OSTCCR_PRESCALE1_MASK	0x3
+#define OSTCCR_PRESCALE2_MASK	0xc
+#define OSTCCR_PRESCALE1_LSB	0
+#define OSTCCR_PRESCALE2_LSB	2
+
+/* bits within the OSTCR register */
+#define OSTCR_OST1CLR		BIT(0)
+#define OSTCR_OST2CLR		BIT(1)
+
+/* bits within the OSTFR register */
+#define OSTFR_FFLAG			BIT(0)
+
+/* bits within the OSTMR register */
+#define OSTMR_FMASK			BIT(0)
+
+/* bits within the OSTESR register */
+#define OSTESR_OST1ENS		BIT(0)
+#define OSTESR_OST2ENS		BIT(1)
+
+/* bits within the OSTECR register */
+#define OSTECR_OST1ENC		BIT(0)
+#define OSTECR_OST2ENC		BIT(1)
+
+enum ingenic_ost_version {
+	ID_JZ4725B,
+	ID_JZ4770,
+	ID_X1000,
+};
 
 struct ingenic_ost_soc_info {
+	enum ingenic_ost_version version;
+
+	unsigned cntl_reg;
 	bool is64bit;
 };
 
@@ -37,6 +80,7 @@ struct ingenic_ost {
 	struct clk *clk;
 
 	struct clocksource cs;
+	const struct ingenic_ost_soc_info *info;
 };
 
 static struct ingenic_ost *ingenic_ost;
@@ -44,7 +88,7 @@ static struct ingenic_ost *ingenic_ost;
 static u64 notrace ingenic_ost_read_cntl(void)
 {
 	/* Read using __iomem pointer instead of regmap to avoid locking */
-	return readl(ingenic_ost->regs + OST_REG_CNTL);
+	return readl(ingenic_ost->regs + ingenic_ost->info->cntl_reg);
 }
 
 static u64 notrace ingenic_ost_read_cnth(void)
@@ -63,6 +107,17 @@ static u64 notrace ingenic_ost_clocksource_readh(struct clocksource *cs)
 	return ingenic_ost_read_cnth();
 }
 
+static u8 ingenic_ost_get_prescale(unsigned long rate, unsigned long req_rate)
+{
+	u8 prescale;
+
+	for (prescale = 0; prescale < 2; prescale++)
+		if ((rate >> (prescale * 2)) <= req_rate)
+			return prescale;
+
+	return 2; /* /16 divider */
+}
+
 static int __init ingenic_ost_probe(struct platform_device *pdev)
 {
 	const struct ingenic_ost_soc_info *soc_info;
@@ -71,7 +126,9 @@ static int __init ingenic_ost_probe(struct platform_device *pdev)
 	struct clocksource *cs;
 	struct regmap *map;
 	unsigned long rate;
+	unsigned int cnt_clk;
 	int err;
+	u8 prescale;
 
 	soc_info = device_get_match_data(dev);
 	if (!soc_info)
@@ -82,16 +139,11 @@ static int __init ingenic_ost_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	ingenic_ost = ost;
+	ingenic_ost->info = soc_info;
 
 	ost->regs = devm_platform_ioremap_resource(pdev, 0);
 	if (IS_ERR(ost->regs))
 		return PTR_ERR(ost->regs);
-
-	map = device_node_to_regmap(dev->parent->of_node);
-	if (!map) {
-		dev_err(dev, "regmap not found");
-		return -EINVAL;
-	}
 
 	ost->clk = devm_clk_get(dev, "ost");
 	if (IS_ERR(ost->clk))
@@ -101,19 +153,54 @@ static int __init ingenic_ost_probe(struct platform_device *pdev)
 	if (err)
 		return err;
 
-	/* Clear counter high/low registers */
-	if (soc_info->is64bit)
-		regmap_write(map, TCU_REG_OST_CNTL, 0);
-	regmap_write(map, TCU_REG_OST_CNTH, 0);
-
-	/* Don't reset counter at compare value. */
-	regmap_update_bits(map, TCU_REG_OST_TCSR,
-			   TCU_OST_TCSR_MASK, TCU_OST_TCSR_CNT_MD);
-
 	rate = clk_get_rate(ost->clk);
 
-	/* Enable OST TCU channel */
-	regmap_write(map, TCU_REG_TESR, BIT(TCU_OST_CHANNEL));
+	if (soc_info->version >= ID_X1000) {
+		map = device_node_to_regmap(dev->of_node);
+		if (!map) {
+			dev_err(dev, "regmap not found");
+			return -EINVAL;
+		}
+
+		/* Clear counter CNT registers */
+		regmap_write(map, OST_REG_OSTCR, OSTCR_OST2CLR);
+
+		err = of_property_read_u32(dev->of_node, "counting-frequency",
+					   &cnt_clk);
+		if (err) {
+			dev_err(&pdev->dev, "counting-frequency not specified in DT\n");
+			return err;
+		}
+
+		prescale = ingenic_ost_get_prescale(rate, cnt_clk);
+		rate = rate >> (prescale * 2);
+
+		err = regmap_update_bits(map, OST_REG_OSTCCR,
+					 OSTCCR_PRESCALE2_MASK,
+					 prescale << OSTCCR_PRESCALE2_LSB);
+		WARN_ONCE(err < 0, "Unable to update OSTCCR");
+
+		/* Enable OST channel */
+		regmap_write(map, OST_REG_OSTESR, OSTESR_OST2ENS);
+	} else {
+		map = device_node_to_regmap(dev->parent->of_node);
+		if (!map) {
+			dev_err(dev, "regmap not found");
+			return -EINVAL;
+		}
+
+		/* Clear counter high/low registers */
+		if (soc_info->is64bit)
+			regmap_write(map, TCU_REG_OST_CNTL, 0);
+		regmap_write(map, TCU_REG_OST_CNTH, 0);
+
+		/* Don't reset counter at compare value. */
+		regmap_update_bits(map, TCU_REG_OST_TCSR,
+				   TCU_OST_TCSR_MASK, TCU_OST_TCSR_CNT_MD);
+
+		/* Enable OST TCU channel */
+		regmap_write(map, TCU_REG_TESR, BIT(TCU_OST_CHANNEL));
+	}
 
 	cs = &ost->cs;
 	cs->name	= "ingenic-ost";
@@ -164,16 +251,29 @@ static const struct dev_pm_ops __maybe_unused ingenic_ost_pm_ops = {
 };
 
 static const struct ingenic_ost_soc_info jz4725b_ost_soc_info = {
+	.version = ID_JZ4725B,
+
 	.is64bit = false,
 };
 
 static const struct ingenic_ost_soc_info jz4770_ost_soc_info = {
+	.version = ID_JZ4770,
+
+	.cntl_reg = OST_REG_CNTL,
+	.is64bit = true,
+};
+
+static const struct ingenic_ost_soc_info x1000_ost_soc_info = {
+	.version = ID_X1000,
+
+	.cntl_reg = OST_REG_OST2CNTL,
 	.is64bit = true,
 };
 
 static const struct of_device_id ingenic_ost_of_match[] = {
 	{ .compatible = "ingenic,jz4725b-ost", .data = &jz4725b_ost_soc_info, },
 	{ .compatible = "ingenic,jz4770-ost", .data = &jz4770_ost_soc_info, },
+	{ .compatible = "ingenic,x1000-ost", .data = &x1000_ost_soc_info, },
 	{ }
 };
 

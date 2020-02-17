@@ -21,7 +21,16 @@
 
 #include <dt-bindings/clock/ingenic,tcu.h>
 
+enum ingenic_soc_version {
+	ID_JZ4740,
+	ID_JZ4725B,
+	ID_JZ4770,
+	ID_X1000,
+};
+
 struct ingenic_soc_info {
+	enum ingenic_soc_version version;
+
 	unsigned int num_channels;
 };
 
@@ -219,18 +228,34 @@ err_clk_put:
 }
 
 static const struct ingenic_soc_info jz4740_soc_info = {
+	.version = ID_JZ4740,
+
 	.num_channels = 8,
 };
 
 static const struct ingenic_soc_info jz4725b_soc_info = {
+	.version = ID_JZ4725B,
+
 	.num_channels = 6,
+};
+
+static const struct ingenic_soc_info jz4770_soc_info = {
+	.version = ID_JZ4770,
+
+	.num_channels = 8,
+};
+
+static const struct ingenic_soc_info x1000_soc_info = {
+	.version = ID_X1000,
+
+	.num_channels = 8,
 };
 
 static const struct of_device_id ingenic_tcu_of_match[] = {
 	{ .compatible = "ingenic,jz4740-tcu", .data = &jz4740_soc_info, },
 	{ .compatible = "ingenic,jz4725b-tcu", .data = &jz4725b_soc_info, },
-	{ .compatible = "ingenic,jz4770-tcu", .data = &jz4740_soc_info, },
-	{ .compatible = "ingenic,x1000-tcu", .data = &jz4740_soc_info, },
+	{ .compatible = "ingenic,jz4770-tcu", .data = &jz4770_soc_info, },
+	{ .compatible = "ingenic,x1000-tcu", .data = &x1000_soc_info, },
 	{ /* sentinel */ }
 };
 
@@ -253,41 +278,63 @@ static int __init ingenic_tcu_init(struct device_node *np)
 	if (!tcu)
 		return -ENOMEM;
 
-	/* Enable all TCU channels for PWM use by default except channels 0/1 */
-	tcu->pwm_channels_mask = GENMASK(soc_info->num_channels - 1, 2);
-	of_property_read_u32(np, "ingenic,pwm-channels-mask",
-			     (u32 *)&tcu->pwm_channels_mask);
-
-	/* Verify that we have at least two free channels */
-	if (hweight8(tcu->pwm_channels_mask) > soc_info->num_channels - 2) {
-		pr_crit("%s: Invalid PWM channel mask: 0x%02lx\n", __func__,
-			tcu->pwm_channels_mask);
-		ret = -EINVAL;
-		goto err_free_ingenic_tcu;
-	}
-
 	tcu->map = map;
 	ingenic_tcu = tcu;
 
-	tcu->timer_channel = find_first_zero_bit(&tcu->pwm_channels_mask,
-						 soc_info->num_channels);
-	tcu->cs_channel = find_next_zero_bit(&tcu->pwm_channels_mask,
-					     soc_info->num_channels,
-					     tcu->timer_channel + 1);
+	if (soc_info->version <= ID_JZ4740) {
+		/* Enable all TCU channels for PWM use by default except channels 0/1 */
+		tcu->pwm_channels_mask = GENMASK(soc_info->num_channels - 1, 2);
+		of_property_read_u32(np, "ingenic,pwm-channels-mask",
+					 (u32 *)&tcu->pwm_channels_mask);
 
-	ret = ingenic_tcu_clocksource_init(np, tcu);
-	if (ret) {
-		pr_crit("%s: Unable to init clocksource: %d\n", __func__, ret);
-		goto err_free_ingenic_tcu;
+		/* Verify that we have at least two free channels */
+		if (hweight8(tcu->pwm_channels_mask) > soc_info->num_channels - 2) {
+			pr_crit("%s: Invalid PWM channel mask: 0x%02lx\n", __func__,
+				tcu->pwm_channels_mask);
+			ret = -EINVAL;
+			goto err_free_ingenic_tcu;
+		}
+
+		tcu->timer_channel = find_first_zero_bit(&tcu->pwm_channels_mask,
+							 soc_info->num_channels);
+		tcu->cs_channel = find_next_zero_bit(&tcu->pwm_channels_mask,
+							 soc_info->num_channels,
+							 tcu->timer_channel + 1);
+
+		ret = ingenic_tcu_clocksource_init(np, tcu);
+		if (ret) {
+			pr_crit("%s: Unable to init clocksource: %d\n", __func__, ret);
+			goto err_free_ingenic_tcu;
+		}
+
+		ret = ingenic_tcu_timer_init(np, tcu);
+		if (ret)
+			goto err_tcu_clocksource_cleanup;
+
+		/* Register the sched_clock at the end as there's no way to undo it */
+		rate = clk_get_rate(tcu->cs_clk);
+		sched_clock_register(ingenic_tcu_timer_read, 16, rate);
+	} else {
+		/* Enable all TCU channels for PWM use by default except channels 0 */
+		tcu->pwm_channels_mask = GENMASK(soc_info->num_channels - 1, 1);
+		of_property_read_u32(np, "ingenic,pwm-channels-mask",
+					 (u32 *)&tcu->pwm_channels_mask);
+
+		/* Verify that we have at least one free channels */
+		if (hweight8(tcu->pwm_channels_mask) > soc_info->num_channels - 1) {
+			pr_crit("%s: Invalid PWM channel mask: 0x%02lx\n", __func__,
+				tcu->pwm_channels_mask);
+			ret = -EINVAL;
+			goto err_free_ingenic_tcu;
+		}
+
+		tcu->timer_channel = find_first_zero_bit(&tcu->pwm_channels_mask,
+							 soc_info->num_channels);
+
+		ret = ingenic_tcu_timer_init(np, tcu);
+		if (ret)
+			goto err_tcu_clocksource_cleanup;
 	}
-
-	ret = ingenic_tcu_timer_init(np, tcu);
-	if (ret)
-		goto err_tcu_clocksource_cleanup;
-
-	/* Register the sched_clock at the end as there's no way to undo it */
-	rate = clk_get_rate(tcu->cs_clk);
-	sched_clock_register(ingenic_tcu_timer_read, 16, rate);
 
 	return 0;
 

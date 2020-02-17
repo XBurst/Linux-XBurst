@@ -35,6 +35,10 @@
 	clock-frequency = <24000000>;
 };
 
+&ost {
+	counting-frequency = <1500000>;
+};
+
 &tcu {
 	/* 1500 kHz for the system timer and clocksource */
 	assigned-clocks = <&tcu TCU_CLK_TIMER0>, <&tcu TCU_CLK_TIMER2>;

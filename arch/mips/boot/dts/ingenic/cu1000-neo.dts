@@ -44,13 +44,17 @@
 	clock-frequency = <24000000>;
 };
 
-&tcu {
-	/* 1500 kHz for the system timer and clocksource */
-	assigned-clocks = <&tcu TCU_CLK_TIMER0>, <&tcu TCU_CLK_TIMER2>;
-	assigned-clock-rates = <1500000>, <1500000>;
+&ost {
+	counting-frequency = <1500000>;
+};
 
-	/* Use channel #0 for the system timer channel #2 for the clocksource */
-	ingenic,pwm-channels-mask = <0xfa>;
+&tcu {
+	/* 1500 kHz for the system timer */
+	assigned-clocks = <&tcu TCU_CLK_TIMER7>;
+	assigned-clock-rates = <1500000>;
+
+	/* Use channel #8 for the system timer */
+	ingenic,pwm-channels-mask = <0x7f>;
 };
 
 &i2c0 {
