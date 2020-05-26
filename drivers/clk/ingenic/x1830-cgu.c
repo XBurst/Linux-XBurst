@@ -41,10 +41,50 @@
 #define CGU_REG_MACPHYC		0xe8
 
 /* bits within the OPCR register */
+#define OPCR_GATE_USBPHYCLK	BIT(23)
 #define OPCR_SPENDN0		BIT(7)
 #define OPCR_SPENDN1		BIT(6)
 
+/* bits within the USBPCR register */
+#define USBPCR_SIDDQ		BIT(21)
+#define USBPCR_OTG_DISABLE	BIT(20)
+
 static struct ingenic_cgu *cgu;
+
+static int x1830_usb_phy_enable(struct clk_hw *hw)
+{
+	void __iomem *reg_opcr		= cgu->base + CGU_REG_OPCR;
+	void __iomem *reg_usbpcr	= cgu->base + CGU_REG_USBPCR;
+
+	writel((readl(reg_opcr) | OPCR_SPENDN0) & ~OPCR_GATE_USBPHYCLK, reg_opcr);
+	writel(readl(reg_usbpcr) & ~USBPCR_OTG_DISABLE & ~USBPCR_SIDDQ, reg_usbpcr);
+	return 0;
+}
+
+static void x1830_usb_phy_disable(struct clk_hw *hw)
+{
+	void __iomem *reg_opcr		= cgu->base + CGU_REG_OPCR;
+	void __iomem *reg_usbpcr	= cgu->base + CGU_REG_USBPCR;
+
+	writel((readl(reg_opcr) & ~OPCR_SPENDN0) | OPCR_GATE_USBPHYCLK, reg_opcr);
+	writel(readl(reg_usbpcr) | USBPCR_OTG_DISABLE | USBPCR_SIDDQ, reg_usbpcr);
+}
+
+static int x1830_usb_phy_is_enabled(struct clk_hw *hw)
+{
+	void __iomem *reg_opcr		= cgu->base + CGU_REG_OPCR;
+	void __iomem *reg_usbpcr	= cgu->base + CGU_REG_USBPCR;
+
+	return (readl(reg_opcr) & OPCR_SPENDN0) &&
+		!(readl(reg_usbpcr) & USBPCR_SIDDQ) &&
+		!(readl(reg_usbpcr) & USBPCR_OTG_DISABLE);
+}
+
+static const struct clk_ops x1830_otg_phy_ops = {
+	.enable		= x1830_usb_phy_enable,
+	.disable	= x1830_usb_phy_disable,
+	.is_enabled	= x1830_usb_phy_is_enabled,
+};
 
 static const s8 pll_od_encoding[64] = {
 	0x0, 0x1,  -1, 0x2,  -1,  -1,  -1, 0x3,
@@ -156,6 +196,14 @@ static const struct ingenic_cgu_clk_info x1830_cgu_clocks[] = {
 			.enable_bit = 0,
 			.stable_bit = 3,
 		},
+	},
+
+	/* Custom (SoC-specific) OTG PHY */
+
+	[X1830_CLK_OTGPHY] = {
+		"otg_phy", CGU_CLK_CUSTOM,
+		.parents = { X1830_CLK_EXCLK, -1, -1, -1 },
+		.custom = { &x1830_otg_phy_ops },
 	},
 
 	/* Muxes & dividers */
