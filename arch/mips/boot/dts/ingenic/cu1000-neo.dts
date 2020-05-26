@@ -74,6 +74,10 @@
 	status = "okay";
 };
 
+&otg {
+	status = "okay";
+};
+
 &mac {
 	phy-mode = "rmii";
 	phy-handle = <&lan8720a>;
