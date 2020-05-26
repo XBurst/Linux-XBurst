@@ -396,6 +396,13 @@
 	status = "okay";
 };
 
+&otg {
+	status = "okay";
+
+	assigned-clocks = <&cgu JZ4780_CLK_OTGPHY>;
+	assigned-clock-rates = <48000000>;
+};
+
 &pinctrl {
 	pins_uart0: uart0 {
 		function = "uart0";

@@ -135,6 +135,10 @@
 	};
 };
 
+&otg {
+	status = "okay";
+};
+
 &pinctrl {
 	pins_uart1: uart1 {
 		function = "uart1";
