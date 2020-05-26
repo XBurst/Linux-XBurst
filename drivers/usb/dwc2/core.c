@@ -1216,6 +1216,15 @@ int dwc2_phy_init(struct dwc2_hsotg *hsotg, bool select_phy)
 		dwc2_writel(hsotg, usbcfg, GUSBCFG);
 	}
 
+	if (dwc2_is_host_mode(hsotg)) {
+		hsotg->op_state = OTG_STATE_A_HOST;
+		usbcfg = GOTGCTL_VBVALIDOVEN | GOTGCTL_VBVALIDOVVAL;
+		dwc2_writel(hsotg, usbcfg, GOTGCTL);
+	} else {
+		hsotg->op_state = OTG_STATE_B_PERIPHERAL;
+	}
+
+
 	return retval;
 }
 
