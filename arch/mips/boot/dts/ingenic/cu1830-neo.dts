@@ -74,6 +74,10 @@
 	pinctrl-0 = <&pins_uart1>;
 };
 
+&otg {
+	status = "okay";
+};
+
 &mac {
 	status = "okay";
 
