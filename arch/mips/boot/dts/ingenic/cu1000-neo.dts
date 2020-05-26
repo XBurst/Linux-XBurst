@@ -103,6 +103,10 @@
 	};
 };
 
+&otg {
+	status = "okay";
+};
+
 &mac {
 	status = "okay";
 
