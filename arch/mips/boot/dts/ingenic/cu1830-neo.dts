@@ -23,6 +23,14 @@
 		reg = <0x0 0x08000000>;
 	};
 
+	leds {
+		compatible = "gpio-leds";
+		led-0 {
+			gpios = <&gpc 17 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "mmc0";
+		};
+	};
+
 	wlan_pwrseq: msc1-pwrseq {
 		compatible = "mmc-pwrseq-simple";
 
