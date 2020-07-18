@@ -75,6 +75,26 @@
 
 	pinctrl-names = "default";
 	pinctrl-0 = <&pins_ssi0>;
+
+	sc16is752: expander@0 {
+		compatible = "nxp,sc16is752";
+		reg = <0>; /* CE0 */
+		spi-max-frequency = <4000000>;
+
+		clocks = <&exclk_sc16is752>;
+
+		interrupt-parent = <&gpb>;
+		interrupts = <18 IRQ_TYPE_EDGE_FALLING>;
+
+		gpio-controller;
+		#gpio-cells = <2>;
+
+		exclk_sc16is752: sc16is752 {
+			compatible = "fixed-clock";
+			#clock-cells = <0>;
+			clock-frequency = <48000000>;
+		};
+	};
 };
 
 &otg {
