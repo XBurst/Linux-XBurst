@@ -59,6 +59,19 @@
 		};
 	};
 
+	ost: timer@12000000 {
+		compatible = "ingenic,x1830-ost", "ingenic,x1000-ost";
+		reg = <0x12000000 0x3c>;
+
+		#clock-cells = <1>;
+
+		clocks = <&cgu X1830_CLK_OST>;
+		clock-names = "ost";
+
+		interrupt-parent = <&cpuintc>;
+		interrupts = <4>;
+	};
+
 	tcu: timer@10002000 {
 		compatible = "ingenic,x1830-tcu", "ingenic,x1000-tcu", "simple-mfd";
 		reg = <0x10002000 0x1000>;

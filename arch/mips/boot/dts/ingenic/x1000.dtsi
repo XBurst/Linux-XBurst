@@ -59,6 +59,19 @@
 		};
 	};
 
+	ost: timer@12000000 {
+		compatible = "ingenic,x1000-ost";
+		reg = <0x12000000 0x3c>;
+
+		#clock-cells = <1>;
+
+		clocks = <&cgu X1000_CLK_OST>;
+		clock-names = "ost";
+
+		interrupt-parent = <&cpuintc>;
+		interrupts = <3>;
+	};
+
 	tcu: timer@10002000 {
 		compatible = "ingenic,x1000-tcu",
 				 "ingenic,jz4770-tcu",
