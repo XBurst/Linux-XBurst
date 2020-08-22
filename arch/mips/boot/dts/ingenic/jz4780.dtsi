@@ -80,6 +80,11 @@
 
 			#phy-cells = <0>;
 		};
+
+		rng: rng@d8 {
+			compatible = "ingenic,jz4780-rng";
+			reg = <0xd8 0x8>;
+		};
 	};
 
 	tcu: timer@10002000 {

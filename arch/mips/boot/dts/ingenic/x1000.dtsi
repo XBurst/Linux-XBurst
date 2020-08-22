@@ -71,6 +71,11 @@
 
 			#phy-cells = <0>;
 		};
+
+		rng: rng@d8 {
+			compatible = "ingenic,x1000-rng";
+			reg = <0xd8 0x8>;
+		};
 	};
 
 	ost: timer@12000000 {

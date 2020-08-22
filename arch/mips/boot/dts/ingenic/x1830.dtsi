@@ -285,6 +285,13 @@
 		status = "disabled";
 	};
 
+	dtrng: trng@10072000 {
+		compatible = "ingenic,x1830-dtrng";
+		reg = <0x10072000 0xc>;
+
+		clocks = <&cgu X1830_CLK_DTRNG>;
+	};
+
 	pdma: dma-controller@13420000 {
 		compatible = "ingenic,x1830-dma";
 		reg = <0x13420000 0x400
