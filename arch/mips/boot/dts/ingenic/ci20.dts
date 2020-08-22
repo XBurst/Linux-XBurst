@@ -93,6 +93,15 @@
 	clock-frequency = <48000000>;
 };
 
+&cgu {
+	/*
+	 * Use the 32.768 kHz oscillator as the parent of the RTC for a higher
+	 * precision.
+	 */
+	assigned-clocks = <&cgu JZ4780_CLK_RTC>;
+	assigned-clock-parents = <&cgu JZ4780_CLK_RTCLK>;
+};
+
 &mmc0 {
 	status = "okay";
 

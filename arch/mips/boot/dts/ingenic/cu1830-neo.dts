@@ -43,6 +43,25 @@
 	clock-frequency = <24000000>;
 };
 
+&cgu {
+	/*
+	 * Put the DDR under MPLL, use a rate of 600 MHz for MPLL and DDR.
+	 * Use the 32.768 kHz oscillator as the parent of the RTC for a higher
+	 * precision.
+	 */
+	assigned-clocks =
+		<&cgu X1830_CLK_MPLL>,
+		<&cgu X1830_CLK_DDR>,
+		<&cgu X1830_CLK_RTC>;
+	assigned-clock-parents =
+		<0>,
+		<&cgu X1830_CLK_MPLL>,
+		<&cgu X1830_CLK_RTCLK>;
+	assigned-clock-rates =
+		<600000000>,
+		<600000000>;
+};
+
 &ost {
 	/* 1500 kHz for the system timer and clocksource */
 	assigned-clocks = <&ost OST_CLK_PERCPU_TIMER>, <&ost OST_CLK_GLOBAL_TIMER>;
