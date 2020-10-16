@@ -53,5 +53,7 @@
 #define X1830_CLK_OST			38
 #define X1830_CLK_EXCLK_DIV512	39
 #define X1830_CLK_RTC			40
+#define X1830_CLK_CIM			41
+#define X1830_CLK_AIC			42
 
 #endif /* __DT_BINDINGS_CLOCK_X1830_CGU_H__ */

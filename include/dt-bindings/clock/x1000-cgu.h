@@ -50,5 +50,7 @@
 #define X1000_CLK_PDMA			35
 #define X1000_CLK_EXCLK_DIV512	36
 #define X1000_CLK_RTC			37
+#define X1000_CLK_CIM			38
+#define X1000_CLK_AIC			39
 
 #endif /* __DT_BINDINGS_CLOCK_X1000_CGU_H__ */
