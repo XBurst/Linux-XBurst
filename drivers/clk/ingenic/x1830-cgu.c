@@ -61,6 +61,7 @@ static int x1830_usb_phy_enable(struct clk_hw *hw)
 
 	writel((readl(reg_opcr) | OPCR_SPENDN0) & ~OPCR_GATE_USBPHYCLK, reg_opcr);
 	writel(readl(reg_usbpcr) & ~USBPCR_OTG_DISABLE & ~USBPCR_SIDDQ, reg_usbpcr);
+
 	return 0;
 }
 
@@ -329,6 +330,14 @@ static const struct ingenic_cgu_clk_info x1830_cgu_clocks[] = {
 		.mux = { CGU_REG_SSICDR, 29, 1 },
 	},
 
+	[X1830_CLK_CIM] = {
+		"cim", CGU_CLK_MUX | CGU_CLK_DIV,
+		.parents = { X1830_CLK_SCLKA, X1830_CLK_MPLL,
+					 X1830_CLK_VPLL, X1830_CLK_EPLL },
+		.mux = { CGU_REG_CIMCDR, 30, 2 },
+		.div = { CGU_REG_CIMCDR, 0, 1, 8, 29, 28, 27 },
+	},
+
 	[X1830_CLK_EXCLK_DIV512] = {
 		"exclk_div512", CGU_CLK_FIXDIV,
 		.parents = { X1830_CLK_EXCLK },
@@ -384,6 +393,12 @@ static const struct ingenic_cgu_clk_info x1830_cgu_clocks[] = {
 		"smb2", CGU_CLK_GATE,
 		.parents = { X1830_CLK_PCLK, -1, -1, -1 },
 		.gate = { CGU_REG_CLKGR0, 9 },
+	},
+
+	[X1830_CLK_AIC] = {
+		"aic", CGU_CLK_GATE,
+		.parents = { X1830_CLK_EXCLK, -1, -1, -1 },
+		.gate = { CGU_REG_CLKGR0, 11 },
 	},
 
 	[X1830_CLK_UART0] = {

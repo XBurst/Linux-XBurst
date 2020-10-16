@@ -126,6 +126,7 @@ static int x1000_otg_phy_set_rate(struct clk_hw *hw, unsigned long req_rate,
 	writel(usbpcr1, cgu->base + CGU_REG_USBPCR1);
 
 	spin_unlock_irqrestore(&cgu->lock, flags);
+
 	return 0;
 }
 
@@ -136,6 +137,7 @@ static int x1000_usb_phy_enable(struct clk_hw *hw)
 
 	writel(readl(reg_opcr) | OPCR_SPENDN0, reg_opcr);
 	writel(readl(reg_usbpcr) & ~USBPCR_OTG_DISABLE & ~USBPCR_SIDDQ, reg_usbpcr);
+
 	return 0;
 }
 
@@ -360,6 +362,13 @@ static const struct ingenic_cgu_clk_info x1000_cgu_clocks[] = {
 		.mux = { CGU_REG_SSICDR, 30, 1 },
 	},
 
+	[X1000_CLK_CIM] = {
+		"cim", CGU_CLK_MUX | CGU_CLK_DIV,
+		.parents = { X1000_CLK_SCLKA, X1000_CLK_MPLL, -1, -1 },
+		.mux = { CGU_REG_CIMCDR, 31, 1 },
+		.div = { CGU_REG_CIMCDR, 0, 1, 8, 29, 28, 27 },
+	},
+
 	[X1000_CLK_EXCLK_DIV512] = {
 		"exclk_div512", CGU_CLK_FIXDIV,
 		.parents = { X1000_CLK_EXCLK },
@@ -409,6 +418,12 @@ static const struct ingenic_cgu_clk_info x1000_cgu_clocks[] = {
 		"i2c2", CGU_CLK_GATE,
 		.parents = { X1000_CLK_PCLK, -1, -1, -1 },
 		.gate = { CGU_REG_CLKGR, 9 },
+	},
+
+	[X1000_CLK_AIC] = {
+		"aic", CGU_CLK_GATE,
+		.parents = { X1000_CLK_EXCLK, -1, -1, -1 },
+		.gate = { CGU_REG_CLKGR, 11 },
 	},
 
 	[X1000_CLK_UART0] = {
