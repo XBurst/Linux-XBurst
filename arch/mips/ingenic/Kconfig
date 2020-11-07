@@ -6,6 +6,7 @@ config MACH_INGENIC_GENERIC
 	select MACH_JZ4740
 	select MACH_JZ4725B
 	select MACH_JZ4770
+	select MACH_JZ4775
 	select MACH_JZ4780
 	select MACH_X1000
 	select MACH_X1830
@@ -56,6 +57,11 @@ config MACH_JZ4740
 config MACH_JZ4770
 	bool
 	select MIPS_CPU_SCACHE
+	select SYS_HAS_CPU_MIPS32_R2
+	select SYS_SUPPORTS_HIGHMEM
+
+config MACH_JZ4775
+	bool
 	select SYS_HAS_CPU_MIPS32_R2
 	select SYS_SUPPORTS_HIGHMEM
 
