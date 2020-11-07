@@ -1,0 +1,189 @@
+// SPDX-License-Identifier: GPL-2.0
+/dts-v1/;
+
+#include "jz4775.dtsi"
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/interrupt-controller/irq.h>
+
+/ {
+	compatible = "yna,cu4775-neo", "ingenic,jz4775";
+	model = "YSH & ATIL General Board CU4775-Neo";
+
+	aliases {
+		serial3 = &uart3;
+	};
+
+	chosen {
+		stdout-path = "serial3:115200n8";
+	};
+
+	memory {
+		device_type = "memory";
+		reg = <0x0 0x10000000>,
+		      <0x30000000 0x10000000>;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		led-0 {
+			gpios = <&gpc 25 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "mmc0";
+		};
+	};
+
+	wlan_pwrseq: msc1-pwrseq {
+		compatible = "mmc-pwrseq-simple";
+
+		reset-gpios = <&gpc 13 GPIO_ACTIVE_LOW>;
+		post-power-on-delay-ms = <200>;
+	};
+};
+
+&exclk {
+	clock-frequency = <24000000>;
+};
+
+&cgu {
+	/*
+	 * Use the 32.768 kHz oscillator as the parent of the RTC for a higher
+	 * precision.
+	 */
+	assigned-clocks = <&cgu JZ4775_CLK_RTC>;
+	assigned-clock-parents = <&cgu JZ4775_CLK_RTCLK>;
+};
+
+&tcu {
+	/* 1500 kHz for the system timer, the clocksource, and the OST. */
+	assigned-clocks = <&tcu TCU_CLK_TIMER0>, <&tcu TCU_CLK_TIMER1>, <&tcu TCU_CLK_OST>;
+	assigned-clock-rates = <1500000>, <1500000>, <1500000>;
+};
+
+&uart3 {
+	status = "okay";
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&pins_uart3>;
+};
+
+&ssi {
+	status = "okay";
+
+	spi-max-frequency = <54000000>;
+
+	sc16is752: expander@0 {
+		compatible = "nxp,sc16is752";
+		reg = <0>; /* CE0 */
+		spi-max-frequency = <4000000>;
+
+		clocks = <&exclk_sc16is752>;
+
+		interrupt-parent = <&gpb>;
+		interrupts = <5 IRQ_TYPE_EDGE_FALLING>;
+
+		gpio-controller;
+		#gpio-cells = <2>;
+
+		exclk_sc16is752: sc16is752 {
+			compatible = "fixed-clock";
+			#clock-cells = <0>;
+			clock-frequency = <48000000>;
+		};
+	};
+};
+
+&msc0 {
+	status = "okay";
+
+	bus-width = <8>;
+	max-frequency = <50000000>;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&pins_msc0>;
+
+	non-removable;
+};
+
+&msc1 {
+	status = "okay";
+
+	bus-width = <4>;
+	max-frequency = <50000000>;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&pins_msc1>;
+
+	non-removable;
+};
+
+&msc2 {
+	status = "okay";
+
+	bus-width = <4>;
+	max-frequency = <50000000>;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&pins_msc2>;
+};
+
+&mac {
+	status = "okay";
+
+	phy-mode = "rmii";
+	phy-handle = <&rtl8201f>;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&pins_mac>;
+
+	snps,reset-gpio = <&gpf 15 GPIO_ACTIVE_LOW>; /* PF15 */
+	snps,reset-active-low;
+	snps,reset-delays-us = <0 10000 30000>;
+};
+
+&mdio {
+	status = "okay";
+
+	rtl8201f: ethernet-phy@0 {
+		compatible = "ethernet-phy-id001c.c816", "ethernet-phy-ieee802.3-c22";
+		reg = <0>;
+	};
+};
+
+&otg_phy {
+	status = "okay";
+};
+
+&otg {
+	status = "okay";
+};
+
+&pinctrl {
+	pins_uart3: uart3 {
+		function = "uart3";
+		groups = "uart3-data";
+		bias-disable;
+	};
+
+	pins_msc0: msc0 {
+		function = "mmc0";
+		groups = "mmc0-1bit-a", "mmc0-4bit-a", "mmc0-8bit-a";
+		bias-disable;
+	};
+
+	pins_msc1: msc1 {
+		function = "mmc1";
+		groups = "mmc1-1bit-d", "mmc1-4bit-d";
+		bias-disable;
+	};
+
+	pins_msc2: msc2 {
+		function = "mmc2";
+		groups = "mmc2-1bit-e", "mmc2-4bit-e";
+		bias-disable;
+	};
+
+	pins_mac: mac {
+		function = "mac";
+		groups = "mac-rmii";
+		bias-disable;
+	};
+};
