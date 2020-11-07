@@ -33,6 +33,11 @@ properties:
           - const: gcw,zero
           - const: ingenic,jz4770
 
+     - description: Ingenic Mensa Development Board
+        items:
+          - const: ingenic,mensa
+          - const: ingenic,jz4775
+
       - description: MIPS Creator CI20
         items:
           - const: img,ci20
