@@ -60,7 +60,6 @@ config MACH_JZ4740
 
 config MACH_JZ4770
 	bool
-	select MIPS_CPU_SCACHE
 	select SYS_HAS_CPU_MIPS32_R2
 	select SYS_SUPPORTS_HIGHMEM
 
@@ -71,18 +70,15 @@ config MACH_JZ4775
 
 config MACH_JZ4780
 	bool
-	select MIPS_CPU_SCACHE
 	select SYS_HAS_CPU_MIPS32_R2
 	select SYS_SUPPORTS_HIGHMEM
 
 config MACH_X1000
 	bool
-	select MIPS_CPU_SCACHE
 	select SYS_HAS_CPU_MIPS32_R2
 	select SYS_SUPPORTS_HIGHMEM
 
 config MACH_X1830
 	bool
-	select MIPS_CPU_SCACHE
 	select SYS_HAS_CPU_MIPS32_R2
 	select SYS_SUPPORTS_HIGHMEM
