@@ -108,7 +108,7 @@ static const struct platform_suspend_ops ingenic_pm_ops __maybe_unused = {
 
 static int __init ingenic_pm_init(void)
 {
-	if (boot_cpu_type() == CPU_XBURST) {
+	if ((boot_cpu_type() == CPU_XBURST) || (boot_cpu_type() == CPU_XBURST2)) {
 		if (IS_ENABLED(CONFIG_PM_SLEEP))
 			suspend_set_ops(&ingenic_pm_ops);
 		_machine_halt = ingenic_halt;
