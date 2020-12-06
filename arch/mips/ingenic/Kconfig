@@ -9,6 +9,7 @@ config MACH_INGENIC_GENERIC
 	select MACH_JZ4780
 	select MACH_X1000
 	select MACH_X1830
+	select MACH_X2000
 
 choice
 	prompt "Machine type"
@@ -47,25 +48,37 @@ config X1830_CU1830_NEO
 	bool "YSH & ATIL CU1830 Module with Neo backplane"
 	select MACH_X1830
 
+config X2000_CU2000_NEO
+	bool "YSH & ATIL CU2000 Module with Neo backplane"
+	select MACH_X2000
+
+config X2000_HALLEY5
+	bool "Ingenic Halley5 Development Board"
+	select MACH_X2000
+
 endchoice
 
 config MACH_JZ4725B
 	bool
 	select SYS_HAS_CPU_MIPS32_R1
+	select IRQ_MIPS_CPU
 
 config MACH_JZ4740
 	bool
 	select SYS_HAS_CPU_MIPS32_R1
+	select IRQ_MIPS_CPU
 
 config MACH_JZ4770
 	bool
 	select SYS_HAS_CPU_MIPS32_R2
 	select SYS_SUPPORTS_HIGHMEM
+	select IRQ_MIPS_CPU
 
 config MACH_JZ4775
 	bool
 	select SYS_HAS_CPU_MIPS32_R2
 	select SYS_SUPPORTS_HIGHMEM
+	select IRQ_MIPS_CPU
 
 config MACH_JZ4780
 	bool
@@ -73,13 +86,27 @@ config MACH_JZ4780
 	select SYS_HAS_CPU_MIPS32_R2
 	select SYS_SUPPORTS_HIGHMEM
 	select SYS_SUPPORTS_SMP
+	select IRQ_MIPS_CPU
 
 config MACH_X1000
 	bool
 	select SYS_HAS_CPU_MIPS32_R2
 	select SYS_SUPPORTS_HIGHMEM
+	select IRQ_MIPS_CPU
 
 config MACH_X1830
 	bool
 	select SYS_HAS_CPU_MIPS32_R2
 	select SYS_SUPPORTS_HIGHMEM
+	select IRQ_MIPS_CPU
+
+config MACH_X2000
+	bool
+	select GENERIC_CLOCKEVENTS_BROADCAST if SMP
+	select SYS_HAS_CPU_MIPS32_R5
+	select SYS_SUPPORTS_HIGHMEM
+	select SYS_SUPPORTS_SMP
+	select MIPS_O32_FP64_SUPPORT
+	select WEAK_ORDERING
+	select WEAK_REORDERING_BEYOND_LLSC
+	select IRQ_INGENIC_CPU

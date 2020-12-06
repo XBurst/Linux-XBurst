@@ -18,7 +18,7 @@
 #endif
 #endif
 
-#ifdef CONFIG_IRQ_MIPS_CPU
+#if defined(CONFIG_IRQ_MIPS_CPU) || defined(CONFIG_IRQ_INGENIC_CPU)
 
 #ifndef MIPS_CPU_IRQ_BASE
 #ifdef CONFIG_I8259
