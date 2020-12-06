@@ -6,5 +6,7 @@ dtb-$(CONFIG_JZ4775_CU4775_NEO)	+= cu4775-neo.dtb
 dtb-$(CONFIG_JZ4780_CI20)	+= ci20.dtb
 dtb-$(CONFIG_X1000_CU1000_NEO)	+= cu1000-neo.dtb
 dtb-$(CONFIG_X1830_CU1830_NEO)	+= cu1830-neo.dtb
+dtb-$(CONFIG_X2000_CU2000_NEO)	+= cu2000-neo.dtb
+dtb-$(CONFIG_X2000_HALLEY5)	+= halley5.dtb
 
 obj-$(CONFIG_BUILTIN_DTB)	+= $(addsuffix .o, $(dtb-y))
