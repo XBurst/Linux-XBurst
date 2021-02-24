@@ -94,4 +94,10 @@ config USB_DWC2_DEBUG_PERIODIC
 	  non-periodic transfers, but of course the debug logs will be
 	  incomplete. Note that this also disables some debug messages
 	  for which the transfer type cannot be deduced.
+
+config USB_DWC2_DISABLE_VOD
+	bool "Disable VBUS overcurrent detection"
+	help
+	  Say Y here to switch off VBUS overcurrent detection. It enables USB
+	  functionality blocked by overcurrent detection.
 endif
