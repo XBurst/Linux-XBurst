@@ -520,8 +520,7 @@ static irqreturn_t jz4780_i2c_irq(int irqno, void *dev_id)
 
 			i2c_sta = jz4780_i2c_readw(i2c, JZ4780_I2C_STA);
 
-			while ((i2c_sta & JZ4780_I2C_STA_TFNF) &&
-					(i2c->wt_len > 0)) {
+			while ((i2c_sta & JZ4780_I2C_STA_TFNF) && (i2c->wt_len > 0)) {
 				i2c_sta = jz4780_i2c_readw(i2c, JZ4780_I2C_STA);
 				data = *i2c->wbuf;
 				data &= ~JZ4780_I2C_DC_READ;
