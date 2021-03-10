@@ -168,9 +168,8 @@ struct ingenic_cgu_clk_info {
 	int parents[4];
 
 	union {
-		struct ingenic_cgu_pll_info pll;
-
 		struct {
+			struct ingenic_cgu_pll_info pll;
 			struct ingenic_cgu_gate_info gate;
 			struct ingenic_cgu_mux_info mux;
 			struct ingenic_cgu_div_info div;

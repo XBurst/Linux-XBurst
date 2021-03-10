@@ -24,6 +24,9 @@
 
 #define MHZ (1000 * 1000)
 
+static u8 ingenic_clk_get_parent(struct clk_hw *hw);
+static int ingenic_clk_set_parent(struct clk_hw *hw, u8 idx);
+
 static inline const struct ingenic_cgu_clk_info *
 to_clk_info(struct ingenic_clk *clk)
 {
@@ -87,7 +90,7 @@ ingenic_pll_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
 	bool bypass;
 	u32 ctl;
 
-	BUG_ON(clk_info->type != CGU_CLK_PLL);
+	BUG_ON(!(clk_info->type == CGU_CLK_PLL || clk_info->type == (CGU_CLK_PLL | CGU_CLK_MUX)));
 	pll_info = &clk_info->pll;
 
 	ctl = readl(cgu->base + pll_info->reg);
@@ -298,6 +301,9 @@ static int ingenic_pll_is_enabled(struct clk_hw *hw)
 }
 
 static const struct clk_ops ingenic_pll_ops = {
+	.get_parent = ingenic_clk_get_parent,
+	.set_parent = ingenic_clk_set_parent,
+
 	.recalc_rate = ingenic_pll_recalc_rate,
 	.round_rate = ingenic_pll_round_rate,
 	.set_rate = ingenic_pll_set_rate,
@@ -720,7 +726,7 @@ static int ingenic_register_clock(struct ingenic_cgu *cgu, unsigned idx)
 
 		caps &= ~CGU_CLK_PLL;
 
-		if (caps) {
+		if (caps && caps != CGU_CLK_MUX) {
 			pr_err("%s: PLL may not be combined with type 0x%x\n",
 			       __func__, caps);
 			goto out;
