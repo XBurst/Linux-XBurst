@@ -186,9 +186,13 @@
  * These are the PRID's for when 23:16 == PRID_COMP_INGENIC_*
  */
 
+#define PRID_OPT_XBURST_REV1_2E	0x2e000000	/* JZ4760, JZ4770, JZ4775, X1000 */
+
 #define PRID_IMP_XBURST_REV1	0x0200	/* XBurst®1 with MXU1.0/MXU1.1 SIMD ISA	*/
 #define PRID_IMP_XBURST_REV2	0x0100	/* XBurst®1 with MXU2.0 SIMD ISA		*/
 #define PRID_IMP_XBURST2		0x2000	/* XBurst®2 with MXU2.1 SIMD ISA		*/
+
+#define PRID_REV_XBURST_REV1_4F	0x004f	/* JZ4730, JZ4760, JZ4770, JZ4775, JZ4780, X1000 */
 
 /*
  * These are the PRID's for when 23:16 == PRID_COMP_NETLOGIC
