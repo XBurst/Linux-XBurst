@@ -1832,15 +1832,20 @@ static inline void cpu_probe_ingenic(struct cpuinfo_mips *c, unsigned int cpu)
 		switch (c->processor_id & PRID_COMP_MASK) {
 
 		/*
-		 * The config0 register in the XBurst CPUs with a processor ID of
-		 * PRID_COMP_INGENIC_D0 report themselves as MIPS32r2 compatible,
-		 * but they don't actually support this ISA.
+		 * The config0 register in the XBurst®1 Rev1 CPUs with a company ID of
+		 * PRID_COMP_INGENIC_D0 but not a company options of PRID_OPT_XBURST_REV1_2E
+		 * and a revision of PRID_REV_XBURST_REV1_4F report themselves as MIPS32r2
+		 * compatible, but they don't actually support this ISA.
+		 *
+		 * FPU is not properly detected on the XBurst®1 Rev1 CPUs with a company ID
+		 * of PRID_COMP_INGENIC_D0, a company options of PRID_OPT_XBURST_REV1_2E,
+		 * and a revision of PRID_REV_XBURST_REV1_4F.
 		 */
 		case PRID_COMP_INGENIC_D0:
-			c->isa_level &= ~MIPS_CPU_ISA_M32R2;
-
-			/* FPU is not properly detected on JZ4760(B). */
-			if (c->processor_id == 0x2ed0024f)
+			if ((c->processor_id & (PRID_OPT_MASK | PRID_REV_MASK)) !=
+					(PRID_OPT_XBURST_REV1_2E | PRID_REV_XBURST_REV1_4F))
+				c->isa_level &= ~MIPS_CPU_ISA_M32R2;
+			else
 				c->options |= MIPS_CPU_FPU;
 
 			fallthrough;
