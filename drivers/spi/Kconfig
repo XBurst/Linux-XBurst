@@ -427,6 +427,15 @@ config SPI_INGENIC
 	  To compile this driver as a module, choose M here: the module
 	  will be called spi-ingenic.
 
+config SPI_INGENIC_SFC
+	tristate "Ingenic SoCs SPI Flash Controller"
+	depends on MACH_INGENIC || COMPILE_TEST
+	help
+	  This enables support for the Ingenic SoCs SPI flash controller.
+
+	  To compile this driver as a module, choose M here: the module
+	  will be called ingenic-sfc.
+
 config SPI_INTEL
 	tristate
 
