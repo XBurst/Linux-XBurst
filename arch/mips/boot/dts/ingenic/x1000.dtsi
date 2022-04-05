@@ -300,6 +300,19 @@
 		clocks = <&cgu X1000_CLK_PDMA>;
 	};
 
+	sfc: spi@13440000 {
+		compatible = "ingenic,x1000-sfc";
+		reg = <0x13440000 0x1000>;
+
+		interrupt-parent = <&intc>;
+		interrupts = <7>;
+
+		clocks = <&cgu X1000_CLK_SFC>;
+		clock-names = "sfc";
+
+		status = "disabled";
+	};
+
 	msc0: mmc@13450000 {
 		compatible = "ingenic,x1000-mmc";
 		reg = <0x13450000 0x1000>;
