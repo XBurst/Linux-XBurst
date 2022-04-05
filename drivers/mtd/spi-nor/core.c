@@ -601,19 +601,41 @@ static int spi_nor_wait_till_ready_with_timeout(struct spi_nor *nor,
 	unsigned long deadline;
 	int timeout = 0, ret;
 
-	deadline = jiffies + timeout_jiffies;
+	if (nor->spimem && !nor->params->ready) {
+		struct spi_mem_op op = SPI_MEM_OP(SPI_MEM_OP_CMD(SPINOR_OP_RDSR, 0),
+						       SPI_MEM_OP_NO_ADDR,
+						       SPI_MEM_OP_NO_DUMMY,
+						       SPI_MEM_OP_DATA_IN(1, nor->bouncebuf, 0));
 
-	while (!timeout) {
-		if (time_after_eq(jiffies, deadline))
-			timeout = 1;
+		if (nor->reg_proto == SNOR_PROTO_8_8_8_DTR) {
+			op.addr.nbytes = nor->params->rdsr_addr_nbytes;
+			op.dummy.nbytes = nor->params->rdsr_dummy;
+			/*
+			 * We don't want to read only one byte in DTR mode. So,
+			 * read 2 and then discard the second byte.
+			 */
+			op.data.nbytes = 2;
+		}
 
-		ret = spi_nor_ready(nor);
-		if (ret < 0)
-			return ret;
-		if (ret)
-			return 0;
+		spi_nor_spimem_setup_op(nor, &op, nor->reg_proto);
 
-		cond_resched();
+		return spi_mem_poll_status(nor->spimem, &op, SR_WIP, 0, 0, 10,
+						       jiffies_to_msecs(timeout_jiffies));
+	} else {
+		deadline = jiffies + timeout_jiffies;
+
+		while (!timeout) {
+			if (time_after_eq(jiffies, deadline))
+				timeout = 1;
+
+			ret = spi_nor_ready(nor);
+			if (ret < 0)
+				return ret;
+			if (ret)
+				return 0;
+
+			cond_resched();
+		}
 	}
 
 	dev_dbg(nor->dev, "flash operation timed out\n");
