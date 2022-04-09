@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * SPI bus driver for the Ingenic JZ47xx SoCs
+ * SPI bus driver for the Ingenic SoCs
  * Copyright (c) 2017-2021 Artur Rojek <contact@artur-rojek.eu>
  * Copyright (c) 2017-2021 Paul Cercueil <paul@crapouillou.net>
+ * Copyright (c) 2022 周琰杰 (Zhou Yanjie) <zhouyanjie@wanyeetech.com>
  */
 
 #include <linux/clk.h>
@@ -52,6 +53,9 @@ struct jz_soc_info {
 	u32 bits_per_word_mask;
 	struct reg_field flen_field;
 	bool has_trendian;
+
+	unsigned int max_speed_hz;
+	unsigned int max_native_cs;
 };
 
 struct ingenic_spi {
@@ -418,7 +422,7 @@ static int spi_ingenic_probe(struct platform_device *pdev)
 
 	if (of_property_read_u32(dev->of_node, "num-cs", &num_cs)) {
 		dev_warn(dev, "Number of chip select lines not specified.\n");
-		num_cs = 2;
+		num_cs = pdata->max_native_cs;
 	}
 
 	platform_set_drvdata(pdev, ctlr);
@@ -433,9 +437,9 @@ static int spi_ingenic_probe(struct platform_device *pdev)
 	ctlr->max_dma_len = SPI_INGENIC_FIFO_SIZE;
 	ctlr->bits_per_word_mask = pdata->bits_per_word_mask;
 	ctlr->min_speed_hz = 7200;
-	ctlr->max_speed_hz = 54000000;
+	ctlr->max_speed_hz = pdata->max_speed_hz;
 	ctlr->use_gpio_descriptors = true;
-	ctlr->max_native_cs = 2;
+	ctlr->max_native_cs = pdata->max_native_cs;
 	ctlr->num_chipselect = num_cs;
 	ctlr->dev.of_node = pdev->dev.of_node;
 
@@ -459,17 +463,44 @@ static const struct jz_soc_info jz4750_soc_info = {
 	.bits_per_word_mask = SPI_BPW_RANGE_MASK(2, 17),
 	.flen_field = REG_FIELD(REG_SSICR1, 4, 7),
 	.has_trendian = false,
+
+	.max_speed_hz = 54000000,
+	.max_native_cs = 2,
 };
 
 static const struct jz_soc_info jz4780_soc_info = {
 	.bits_per_word_mask = SPI_BPW_RANGE_MASK(2, 32),
 	.flen_field = REG_FIELD(REG_SSICR1, 3, 7),
 	.has_trendian = true,
+
+	.max_speed_hz = 54000000,
+	.max_native_cs = 2,
+};
+
+static const struct jz_soc_info x1000_soc_info = {
+	.bits_per_word_mask = SPI_BPW_RANGE_MASK(2, 32),
+	.flen_field = REG_FIELD(REG_SSICR1, 3, 7),
+	.has_trendian = true,
+
+	.max_speed_hz = 50000000,
+	.max_native_cs = 2,
+};
+
+static const struct jz_soc_info x2000_soc_info = {
+	.bits_per_word_mask = SPI_BPW_RANGE_MASK(2, 32),
+	.flen_field = REG_FIELD(REG_SSICR1, 3, 7),
+	.has_trendian = true,
+
+	.max_speed_hz = 50000000,
+	.max_native_cs = 1,
 };
 
 static const struct of_device_id spi_ingenic_of_match[] = {
 	{ .compatible = "ingenic,jz4750-spi", .data = &jz4750_soc_info },
+	{ .compatible = "ingenic,jz4775-spi", .data = &jz4780_soc_info },
 	{ .compatible = "ingenic,jz4780-spi", .data = &jz4780_soc_info },
+	{ .compatible = "ingenic,x1000-spi", .data = &x1000_soc_info },
+	{ .compatible = "ingenic,x2000-spi", .data = &x2000_soc_info },
 	{}
 };
 MODULE_DEVICE_TABLE(of, spi_ingenic_of_match);
@@ -483,7 +514,8 @@ static struct platform_driver spi_ingenic_driver = {
 };
 
 module_platform_driver(spi_ingenic_driver);
-MODULE_DESCRIPTION("SPI bus driver for the Ingenic JZ47xx SoCs");
+MODULE_DESCRIPTION("SPI bus driver for the Ingenic SoCs");
 MODULE_AUTHOR("Artur Rojek <contact@artur-rojek.eu>");
 MODULE_AUTHOR("Paul Cercueil <paul@crapouillou.net>");
+MODULE_AUTHOR("周琰杰 (Zhou Yanjie) <zhouyanjie@wanyeetech.com>");
 MODULE_LICENSE("GPL");
