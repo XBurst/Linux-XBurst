@@ -14,6 +14,8 @@
 #include "cgu.h"
 #include "pm.h"
 
+#define MHZ (1000 * 1000)
+
 /* CGU register offsets */
 #define CGU_REG_CPCCR		0x00
 #define CGU_REG_CPPCR		0x0c
@@ -53,6 +55,43 @@
 #define USBPCR_OTG_DISABLE	BIT(20)
 
 static struct ingenic_cgu *cgu;
+
+static void x1830_cgu_calc_m_n_od(const struct ingenic_cgu_pll_info *pll_info,
+		       unsigned long rate, unsigned long parent_rate,
+		       unsigned int *pm, unsigned int *pn, unsigned int *pod)
+{
+	unsigned int m, n, od;
+	unsigned int m_max = 1 << pll_info->m_bits;
+	unsigned int n_max = 1 << pll_info->n_bits;
+	unsigned int multiplier = pll_info->rate_multiplier;
+
+	/*
+	 * The frequency after the input divider must be between 5 and 200 MHz.
+	 * The highest divider yields the best resolution.
+	 */
+	n = parent_rate / (5 * MHZ);
+
+	/* The value of N must be at least 1. */
+	n = clamp_val(n, 1, n_max);
+
+	/*
+	 * The frequency of the VCO must be not higher than 3000 MHz.
+	 * The highest divider yields the best resolution.
+	 */
+	od = 3000ul * MHZ / rate;
+	od = min_t(unsigned int, 1 << __fls(od), pll_info->od_max);
+
+	do {
+		m = (rate / MHZ) * od * n / (multiplier * (parent_rate / MHZ));
+
+		if (m >= 1 && m <= m_max)
+			break;
+	} while (--n);
+
+	*pm = m;
+	*pn = n;
+	*pod = od;
+}
 
 static int x1830_usb_phy_enable(struct clk_hw *hw)
 {
@@ -129,6 +168,7 @@ static const struct ingenic_cgu_clk_info x1830_cgu_clocks[] = {
 			.bypass_bit = 30,
 			.enable_bit = 0,
 			.stable_bit = 3,
+			.calc_m_n_od = x1830_cgu_calc_m_n_od,
 		},
 	},
 
@@ -152,6 +192,7 @@ static const struct ingenic_cgu_clk_info x1830_cgu_clocks[] = {
 			.bypass_bit = 28,
 			.enable_bit = 0,
 			.stable_bit = 3,
+			.calc_m_n_od = x1830_cgu_calc_m_n_od,
 		},
 	},
 
@@ -175,6 +216,7 @@ static const struct ingenic_cgu_clk_info x1830_cgu_clocks[] = {
 			.bypass_bit = 24,
 			.enable_bit = 0,
 			.stable_bit = 3,
+			.calc_m_n_od = x1830_cgu_calc_m_n_od,
 		},
 	},
 
@@ -198,6 +240,7 @@ static const struct ingenic_cgu_clk_info x1830_cgu_clocks[] = {
 			.bypass_bit = 26,
 			.enable_bit = 0,
 			.stable_bit = 3,
+			.calc_m_n_od = x1830_cgu_calc_m_n_od,
 		},
 	},
 
