@@ -7,6 +7,7 @@
  * Copyright (c) 2020 周琰杰 (Zhou Yanjie) <zhouyanjie@wanyeetech.com>
  */
 
+#include <linux/bitfield.h>
 #include <linux/clk-provider.h>
 #include <linux/delay.h>
 #include <linux/io.h>
@@ -17,6 +18,8 @@
 
 #include "cgu.h"
 #include "pm.h"
+
+#define MHZ (1000 * 1000)
 
 /* CGU register offsets */
 #define CGU_REG_CLOCKCONTROL	0x00
@@ -48,6 +51,10 @@
 #define CGU_REG_MSC2CDR			0xa8
 #define CGU_REG_BCHCDR			0xac
 #define CGU_REG_CLOCKSTATUS		0xd4
+
+/* bits within the CPCCR register */
+#define CPCCR_L2CDIV_MASK		GENMASK(7, 4)
+#define CPCCR_CDIV_MASK			GENMASK(3, 0)
 
 /* bits within the OPCR register */
 #define OPCR_SPENDN0			BIT(7)
@@ -101,6 +108,41 @@
 #define CLKGR1_CORE1			BIT(15)
 
 static struct ingenic_cgu *cgu;
+
+static unsigned long jz4780_cpu_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
+{
+	return parent_rate / ((readl(cgu->base + CGU_REG_CPCCR) & CPCCR_CDIV_MASK) + 1);
+}
+
+static long jz4780_cpu_round_rate(struct clk_hw *hw, unsigned long req_rate,
+				      unsigned long *parent_rate)
+{
+	return *parent_rate / ((*parent_rate - 1) / req_rate + 1);
+}
+
+static int jz4780_cpu_set_rate(struct clk_hw *hw, unsigned long req_rate, unsigned long parent_rate)
+{
+	unsigned int div;
+	u32 cpccr;
+
+	div = parent_rate / req_rate;
+	div = min_t(unsigned int, div, 16);
+
+	cpccr = readl(cgu->base + CGU_REG_CPCCR) & ~(CPCCR_L2CDIV_MASK | CPCCR_CDIV_MASK);
+
+	if (req_rate <= 768 * MHZ)
+		writel(cpccr | (div - 1) | (div - 1) << 4, cgu->base + CGU_REG_CPCCR);
+	else
+		writel(cpccr | (div - 1) | (div * 2 - 1) << 4, cgu->base + CGU_REG_CPCCR);
+
+	return 0;
+}
+
+static const struct clk_ops jz4780_cpu_ops = {
+	.recalc_rate = jz4780_cpu_recalc_rate,
+	.round_rate = jz4780_cpu_round_rate,
+	.set_rate = jz4780_cpu_set_rate,
+};
 
 static unsigned long jz4780_otg_phy_recalc_rate(struct clk_hw *hw,
 						unsigned long parent_rate)
@@ -338,6 +380,13 @@ static const struct ingenic_cgu_clk_info jz4780_cgu_clocks[] = {
 
 	/* Custom (SoC-specific) OTG PHY */
 
+	[JZ4780_CLK_CPU] = {
+		"cpu", CGU_CLK_CUSTOM,
+		.flags = CLK_IS_CRITICAL,
+		.parents = { JZ4780_CLK_CPUMUX, -1, -1, -1 },
+		.custom = { &jz4780_cpu_ops },
+	},
+
 	[JZ4780_CLK_OTGPHY] = {
 		"otg_phy", CGU_CLK_CUSTOM,
 		.parents = { -1, -1, JZ4780_CLK_EXCLK, -1 },
@@ -360,16 +409,9 @@ static const struct ingenic_cgu_clk_info jz4780_cgu_clocks[] = {
 		.mux = { CGU_REG_CLOCKCONTROL, 28, 2 },
 	},
 
-	[JZ4780_CLK_CPU] = {
-		"cpu", CGU_CLK_DIV,
-		.flags = CLK_IS_CRITICAL,
-		.parents = { JZ4780_CLK_CPUMUX, -1, -1, -1 },
-		.div = { CGU_REG_CLOCKCONTROL, 0, 1, 4, 22, -1, -1 },
-	},
-
 	[JZ4780_CLK_L2CACHE] = {
 		"l2cache", CGU_CLK_DIV,
-		.flags = CLK_IS_CRITICAL,
+		.flags = CLK_IS_CRITICAL | CLK_GET_RATE_NOCACHE | CLK_GET_ACCURACY_NOCACHE,
 		.parents = { JZ4780_CLK_CPUMUX, -1, -1, -1 },
 		.div = { CGU_REG_CLOCKCONTROL, 4, 1, 4, -1, -1, -1 },
 	},

@@ -4,6 +4,7 @@
  * Copyright (c) 2019 周琰杰 (Zhou Yanjie) <zhouyanjie@wanyeetech.com>
  */
 
+#include <linux/bitfield.h>
 #include <linux/clk-provider.h>
 #include <linux/delay.h>
 #include <linux/io.h>
@@ -13,6 +14,8 @@
 
 #include "cgu.h"
 #include "pm.h"
+
+#define MHZ (1000 * 1000)
 
 /* CGU register offsets */
 #define CGU_REG_CPCCR		0x00
@@ -39,6 +42,13 @@
 #define CGU_REG_CPCSR		0xd4
 #define CGU_REG_PCMCDR1		0xe0
 #define CGU_REG_MACPHYC		0xe8
+
+/* bits within the CPCCR register */
+#define CPCCR_L2CDIV_MASK	GENMASK(7, 4)
+#define CPCCR_CDIV_MASK		GENMASK(3, 0)
+
+/* bits within the CLKGR register */
+#define CLKGR_CPU			BIT(30)
 
 /* bits within the OPCR register */
 #define OPCR_SPENDN0		BIT(7)
@@ -107,6 +117,68 @@ out:
 	 */
 	*pod = 1;
 }
+
+static unsigned long x1000_cpu_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
+{
+	return parent_rate / ((readl(cgu->base + CGU_REG_CPCCR) & CPCCR_CDIV_MASK) + 1);
+}
+
+static long x1000_cpu_round_rate(struct clk_hw *hw, unsigned long req_rate,
+				      unsigned long *parent_rate)
+{
+	return *parent_rate / ((*parent_rate - 1) / req_rate + 1);
+}
+
+static int x1000_cpu_set_rate(struct clk_hw *hw, unsigned long req_rate, unsigned long parent_rate)
+{
+	unsigned int div;
+	u32 cpccr;
+
+	div = parent_rate / req_rate;
+	div = min_t(unsigned int, div, 16);
+
+	cpccr = readl(cgu->base + CGU_REG_CPCCR) & ~(CPCCR_L2CDIV_MASK | CPCCR_CDIV_MASK);
+
+	if (req_rate <= 510 * MHZ)
+		writel(cpccr | (div - 1) | (div - 1) << 4, cgu->base + CGU_REG_CPCCR);
+	else
+		writel(cpccr | (div - 1) | (div * 2 - 1) << 4, cgu->base + CGU_REG_CPCCR);
+
+	return 0;
+}
+
+static int x1000_cpu_enable(struct clk_hw *hw)
+{
+	void __iomem *reg_clkgr	= cgu->base + CGU_REG_CLKGR;
+
+	writel(readl(reg_clkgr) & ~CLKGR_CPU, reg_clkgr);
+
+	return 0;
+}
+
+static void x1000_cpu_disable(struct clk_hw *hw)
+{
+	void __iomem *reg_clkgr	= cgu->base + CGU_REG_CLKGR;
+
+	writel(readl(reg_clkgr) | CLKGR_CPU, reg_clkgr);
+}
+
+static int x1000_cpu_is_enabled(struct clk_hw *hw)
+{
+	void __iomem *reg_clkgr	= cgu->base + CGU_REG_CLKGR;
+
+	return !!(readl(reg_clkgr) & CLKGR_CPU);
+}
+
+static const struct clk_ops x1000_cpu_ops = {
+	.recalc_rate = x1000_cpu_recalc_rate,
+	.round_rate = x1000_cpu_round_rate,
+	.set_rate = x1000_cpu_set_rate,
+
+	.enable		= x1000_cpu_enable,
+	.disable	= x1000_cpu_disable,
+	.is_enabled	= x1000_cpu_is_enabled,
+};
 
 static unsigned long x1000_otg_phy_recalc_rate(struct clk_hw *hw,
 						unsigned long parent_rate)
@@ -297,6 +369,13 @@ static const struct ingenic_cgu_clk_info x1000_cgu_clocks[] = {
 
 	/* Custom (SoC-specific) OTG PHY */
 
+	[X1000_CLK_CPU] = {
+		"cpu", CGU_CLK_CUSTOM,
+		.flags = CLK_IS_CRITICAL,
+		.parents = { X1000_CLK_CPUMUX, -1, -1, -1 },
+		.custom = { &x1000_cpu_ops },
+	},
+
 	[X1000_CLK_OTGPHY] = {
 		"otg_phy", CGU_CLK_CUSTOM,
 		.parents = { -1, -1, X1000_CLK_EXCLK, -1 },
@@ -317,17 +396,9 @@ static const struct ingenic_cgu_clk_info x1000_cgu_clocks[] = {
 		.mux = { CGU_REG_CPCCR, 28, 2 },
 	},
 
-	[X1000_CLK_CPU] = {
-		"cpu", CGU_CLK_DIV | CGU_CLK_GATE,
-		.flags = CLK_IS_CRITICAL,
-		.parents = { X1000_CLK_CPUMUX, -1, -1, -1 },
-		.div = { CGU_REG_CPCCR, 0, 1, 4, 22, -1, -1 },
-		.gate = { CGU_REG_CLKGR, 30 },
-	},
-
 	[X1000_CLK_L2CACHE] = {
 		"l2cache", CGU_CLK_DIV,
-		.flags = CLK_IS_CRITICAL,
+		.flags = CLK_IS_CRITICAL | CLK_GET_RATE_NOCACHE | CLK_GET_ACCURACY_NOCACHE,
 		.parents = { X1000_CLK_CPUMUX, -1, -1, -1 },
 		.div = { CGU_REG_CPCCR, 4, 1, 4, 22, -1, -1 },
 	},
